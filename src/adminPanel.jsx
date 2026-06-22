@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase";
 
 // ─── CSS del panel admin ─────────────────────────────────────────────
@@ -83,13 +83,8 @@ const CSS = `
     display: flex; flex-direction: column;
     position: sticky; top: 0; height: 100vh; overflow-y: auto;
   }
-  .sidebar-head {
-    padding: 24px 20px 20px;
-    border-bottom: 1px solid var(--border);
-  }
-  .sidebar-brand {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
-  }
+  .sidebar-head { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
+  .sidebar-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .sidebar-logo {
     width: 36px; height: 36px; border-radius: 10px;
     background: var(--grad); display: flex; align-items: center;
@@ -99,10 +94,9 @@ const CSS = `
   .sidebar-badge {
     background: rgba(192,57,43,0.2); border: 1px solid rgba(192,57,43,0.4);
     color: var(--accent2); font-size: 10px; font-weight: 700;
-    padding: 3px 10px; border-radius: 100px; letter-spacing: 1px;
-    display: inline-block;
+    padding: 3px 10px; border-radius: 100px; letter-spacing: 1px; display: inline-block;
   }
-  .sidebar-nav { padding: 12px 12px; flex: 1; }
+  .sidebar-nav { padding: 12px; flex: 1; }
   .nav-section { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; padding: 12px 8px 6px; text-transform: uppercase; }
   .nav-item {
     display: flex; align-items: center; gap: 10px;
@@ -122,9 +116,7 @@ const CSS = `
     font-size: 10px; font-weight: 800; padding: 2px 7px;
     border-radius: 100px; font-family: var(--font-m);
   }
-  .sidebar-foot {
-    padding: 16px 12px; border-top: 1px solid var(--border);
-  }
+  .sidebar-foot { padding: 16px 12px; border-top: 1px solid var(--border); }
   .admin-info { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
   .admin-avatar {
     width: 36px; height: 36px; border-radius: 10px;
@@ -153,7 +145,6 @@ const CSS = `
   .topbar-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
   .topbar-right { display: flex; align-items: center; gap: 12px; }
   .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
-
   .content { padding: 28px; }
 
   /* ── STATS ── */
@@ -202,11 +193,13 @@ const CSS = `
     display: inline-flex; align-items: center; gap: 4px;
     padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 700;
   }
-  .badge-green { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
-  .badge-red { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
-  .badge-yellow { background: rgba(234,179,8,0.15); color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
-  .badge-blue { background: rgba(59,130,246,0.15); color: var(--blue); border: 1px solid rgba(59,130,246,0.3); }
-  .badge-orange { background: rgba(232,101,26,0.15); color: var(--accent2); border: 1px solid rgba(232,101,26,0.3); }
+  .badge-green  { background: rgba(34,197,94,0.15);  color: var(--green);  border: 1px solid rgba(34,197,94,0.3); }
+  .badge-red    { background: rgba(239,68,68,0.15);  color: var(--red);    border: 1px solid rgba(239,68,68,0.3); }
+  .badge-yellow { background: rgba(234,179,8,0.15);  color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
+  .badge-blue   { background: rgba(59,130,246,0.15); color: var(--blue);   border: 1px solid rgba(59,130,246,0.3); }
+  .badge-orange { background: rgba(232,101,26,0.15); color: var(--accent2);border: 1px solid rgba(232,101,26,0.3); }
+  /* FIX 2: badge-gold faltaba */
+  .badge-gold   { background: rgba(212,160,23,0.15); color: var(--gold);   border: 1px solid rgba(212,160,23,0.3); }
 
   /* ── BOTONES ACCIÓN ── */
   .btn-action {
@@ -214,13 +207,13 @@ const CSS = `
     cursor: pointer; border: none; font-family: var(--font-b);
     transition: all 0.15s; margin-right: 5px; margin-bottom: 3px;
   }
-  .btn-ban { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
-  .btn-ban:hover { background: rgba(239,68,68,0.3); }
-  .btn-ok { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
-  .btn-ok:hover { background: rgba(34,197,94,0.3); }
-  .btn-blue { background: rgba(59,130,246,0.15); color: var(--blue); border: 1px solid rgba(59,130,246,0.3); }
+  .btn-ban  { background: rgba(239,68,68,0.15);  color: var(--red);    border: 1px solid rgba(239,68,68,0.3); }
+  .btn-ban:hover  { background: rgba(239,68,68,0.3); }
+  .btn-ok   { background: rgba(34,197,94,0.15);  color: var(--green);  border: 1px solid rgba(34,197,94,0.3); }
+  .btn-ok:hover   { background: rgba(34,197,94,0.3); }
+  .btn-blue { background: rgba(59,130,246,0.15); color: var(--blue);   border: 1px solid rgba(59,130,246,0.3); }
   .btn-blue:hover { background: rgba(59,130,246,0.3); }
-  .btn-gold { background: rgba(212,160,23,0.15); color: var(--gold); border: 1px solid rgba(212,160,23,0.3); }
+  .btn-gold { background: rgba(212,160,23,0.15); color: var(--gold);   border: 1px solid rgba(212,160,23,0.3); }
   .btn-gold:hover { background: rgba(212,160,23,0.3); }
   .btn-primary-dark {
     padding: 9px 18px; background: var(--grad); color: white;
@@ -238,8 +231,7 @@ const CSS = `
   .modal-box {
     position: relative; background: var(--bg2); border: 1px solid var(--border);
     border-radius: 18px; padding: 28px; max-width: 440px; width: 100%;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    animation: popIn 0.22s ease;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6); animation: popIn 0.22s ease;
   }
   @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   .modal-title { font-family: var(--font-h); font-size: 17px; font-weight: 800; margin-bottom: 6px; }
@@ -269,8 +261,7 @@ const CSS = `
   }
   .finance-card::after {
     content: ''; position: absolute; top: -20px; right: -20px;
-    width: 80px; height: 80px; border-radius: 50%;
-    background: rgba(255,255,255,0.03);
+    width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.03);
   }
   .finance-label { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
   .finance-val { font-family: var(--font-h); font-size: 32px; font-weight: 900; color: var(--gold); }
@@ -284,7 +275,6 @@ const CSS = `
   }
   .reporte-card:hover { border-color: var(--accent); }
   .reporte-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
-  .reporte-tipo { font-size: 12px; font-weight: 700; }
   .reporte-motivo { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
   .reporte-fecha { font-size: 11px; color: var(--muted); font-family: var(--font-m); }
 
@@ -299,8 +289,8 @@ const CSS = `
   .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
 
   /* ── MSG ── */
-  .msg-ok-dark { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: var(--green); padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
-  .msg-err-dark { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--red); padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .msg-ok-dark  { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.3);  color: var(--green); padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .msg-err-dark { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.3);  color: var(--red);   padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
 
   /* ── ID ── */
   .id-mono { font-family: var(--font-m); font-size: 11px; color: var(--muted); }
@@ -313,60 +303,67 @@ const CSS = `
 `;
 
 const SECCIONES = [
-  { id:"dashboard", icon:"📊", label:"Dashboard" },
-  { id:"reportes",  icon:"🚨", label:"Reportes",    section:"GESTIÓN" },
-  { id:"tiendas",   icon:"🏪", label:"Tiendas",     section:"GESTIÓN" },
-  { id:"usuarios",  icon:"👥", label:"Usuarios" },
-  { id:"productos", icon:"📦", label:"Productos" },
-  { id:"finanzas",  icon:"💰", label:"Finanzas",    section:"FINANZAS" },
-  { id:"beneficios",icon:"🎁", label:"Beneficios" },
+  { id:"dashboard",  icon:"📊", label:"Dashboard" },
+  { id:"reportes",   icon:"🚨", label:"Reportes",   section:"GESTIÓN" },
+  { id:"tiendas",    icon:"🏪", label:"Tiendas",    section:"GESTIÓN" },
+  { id:"usuarios",   icon:"👥", label:"Usuarios" },
+  { id:"productos",  icon:"📦", label:"Productos" },
+  { id:"finanzas",   icon:"💰", label:"Finanzas",   section:"FINANZAS" },
+  { id:"beneficios", icon:"🎁", label:"Beneficios" },
 ];
 
 export default function AdminPanel() {
-  const [usuario, setUsuario]       = useState(null);
-  const [esAdmin, setEsAdmin]       = useState(null); // null=cargando
-  const [seccion, setSeccion]       = useState("dashboard");
-  const [cargando, setCargando]     = useState(false);
-  const [msg, setMsg]               = useState("");
-  const [msgTipo, setMsgTipo]       = useState("ok");
+  const [usuario,    setUsuario]    = useState(null);
+  const [esAdmin,    setEsAdmin]    = useState(null); // null = cargando
+  const [seccion,    setSeccion]    = useState("dashboard");
+  const [cargando,   setCargando]   = useState(false);
+  const [msg,        setMsg]        = useState("");
+  const [msgTipo,    setMsgTipo]    = useState("ok");
 
-  // Datos
-  const [reportes, setReportes]     = useState([]);
-  const [tiendas, setTiendas]       = useState([]);
-  const [usuarios, setUsuarios]     = useState([]);
-  const [productos, setProductos]   = useState([]);
-  const [pagos, setPagos]           = useState([]);
+  const [reportes,   setReportes]   = useState([]);
+  const [tiendas,    setTiendas]    = useState([]);
+  const [usuarios,   setUsuarios]   = useState([]);
+  const [productos,  setProductos]  = useState([]);
+  const [pagos,      setPagos]      = useState([]);
   const [beneficios, setBeneficios] = useState([]);
 
-  // Búsquedas
   const [busT, setBusT] = useState("");
   const [busU, setBusU] = useState("");
   const [busP, setBusP] = useState("");
 
-  // Modal
-  const [modal, setModal] = useState(null); // { tipo, data }
+  // FIX 6: modal guardado en ref para que acciones async siempre lean el valor actual
+  const [modal,     setModal]     = useState(null); // { tipo, data }
   const [modalForm, setModalForm] = useState({});
+  const modalRef = useRef(null);
+  const syncModal = (val) => { modalRef.current = val; setModal(val); };
+
+  // FIX 5: flag para evitar doble carga
+  const adminCargado = useRef(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) verificarAdmin(session.user);
       else setEsAdmin(false);
     });
-    supabase.auth.onAuthStateChange((_e, session) => {
-      if (session?.user) verificarAdmin(session.user);
-      else { setUsuario(null); setEsAdmin(false); }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (session?.user) {
+        // FIX 5: solo verificar si aún no se ha cargado (evita doble ejecución)
+        if (!adminCargado.current) verificarAdmin(session.user);
+      } else {
+        adminCargado.current = false;
+        setUsuario(null); setEsAdmin(false);
+      }
     });
+    return () => subscription.unsubscribe();
   }, []);
 
   async function verificarAdmin(user) {
+    if (adminCargado.current) return; // FIX 5: guard contra doble carga
+    adminCargado.current = true;
     setUsuario(user);
     const { data } = await supabase.from("admins").select("*").eq("email", user.email).single();
-    if (data) {
-      setEsAdmin(true);
-      cargarTodo();
-    } else {
-      setEsAdmin(false);
-    }
+    if (data) { setEsAdmin(true); cargarTodo(); }
+    else { setEsAdmin(false); adminCargado.current = false; }
   }
 
   async function cargarTodo() {
@@ -379,20 +376,24 @@ export default function AdminPanel() {
       supabase.from("pagos").select("*").order("created_at", { ascending: false }),
       supabase.from("beneficios").select("*").order("created_at", { ascending: false }),
     ]);
-    setReportes(r.data || []);
-    setTiendas(t.data || []);
-    setUsuarios(u.data || []);
-    setProductos(p.data || []);
-    setPagos(pg.data || []);
+    setReportes(r.data   || []);
+    setTiendas(t.data    || []);
+    setUsuarios(u.data   || []);
+    setProductos(p.data  || []);
+    setPagos(pg.data     || []);
     setBeneficios(b.data || []);
     setCargando(false);
   }
 
   async function login() {
-    await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: window.location.origin + "/admin" } });
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin + "/admin" },
+    });
   }
 
   async function logout() {
+    adminCargado.current = false;
     await supabase.auth.signOut();
     setUsuario(null); setEsAdmin(false);
   }
@@ -402,36 +403,49 @@ export default function AdminPanel() {
     setTimeout(() => setMsg(""), 3500);
   }
 
-  // ── ACCIONES TIENDAS ───────────────────────────────────────────
+  // ── ACCIONES TIENDAS ──────────────────────────────────────────────
   async function cambiarEstadoTienda(tienda, nuevoEstado) {
-    await supabase.from("tiendas").update({ estado: nuevoEstado }).eq("id", tienda.id);
+    const { error } = await supabase.from("tiendas").update({ estado: nuevoEstado }).eq("id", tienda.id);
+    if (error) { showMsg("Error al cambiar estado: " + error.message, "err"); return; }
     showMsg(`Tienda "${tienda.nombre}" → ${nuevoEstado}`);
     cargarTodo();
   }
 
   async function renovarTienda(tienda) {
-    const nuevaFecha = new Date();
-    nuevaFecha.setDate(nuevaFecha.getDate() + 300);
-    await supabase.from("tiendas").update({ estado: "activa", vence_at: nuevaFecha.toISOString() }).eq("id", tienda.id);
+    // FIX 4: usar campo dedicado "renovado_at" para que el vendedor
+    // calcule los días desde la renovación, no desde created_at.
+    // El frontend debe priorizar renovado_at si existe.
+    const ahora = new Date().toISOString();
+    const { error } = await supabase.from("tiendas").update({
+      estado: "activa",
+      renovado_at: ahora,   // campo nuevo: fecha base para contar los 300 días
+    }).eq("id", tienda.id);
+    if (error) { showMsg("Error al renovar: " + error.message, "err"); return; }
     await supabase.from("beneficios").insert({
       tienda_id: tienda.id, tipo: "renovacion", valor: 300,
       otorgado_por: usuario.email,
     });
-    showMsg(`Tienda "${tienda.nombre}" renovada por 300 días ✅`);
-    cargarTodo(); setModal(null);
+    showMsg(`Tienda "${tienda.nombre}" renovada 300 días ✅`);
+    cargarTodo(); syncModal(null);
   }
 
   async function ampliarProductos(tienda, cantidad) {
-    await supabase.from("beneficios").insert({
-      tienda_id: tienda.id, tipo: "productos_extra", valor: parseInt(cantidad),
+    const cant = parseInt(cantidad) || 5;
+    const { error } = await supabase.from("beneficios").insert({
+      tienda_id: tienda.id, tipo: "productos_extra", valor: cant,
       otorgado_por: usuario.email,
     });
-    showMsg(`+${cantidad} productos extra otorgados a "${tienda.nombre}" ✅`);
-    cargarTodo(); setModal(null);
+    if (error) { showMsg("Error: " + error.message, "err"); return; }
+    // Sumar tokens_extra en la tienda directamente
+    const tokensActuales = tienda.tokens_extra || 0;
+    await supabase.from("tiendas").update({ tokens_extra: tokensActuales + cant }).eq("id", tienda.id);
+    showMsg(`+${cant} productos extra otorgados a "${tienda.nombre}" ✅`);
+    cargarTodo(); syncModal(null);
   }
 
   async function verificarTienda(tienda) {
-    await supabase.from("tiendas").update({ verificada: true }).eq("id", tienda.id);
+    const { error } = await supabase.from("tiendas").update({ verificada: true }).eq("id", tienda.id);
+    if (error) { showMsg("Error: " + error.message, "err"); return; }
     await supabase.from("beneficios").insert({
       tienda_id: tienda.id, tipo: "verificacion", valor: 1,
       otorgado_por: usuario.email,
@@ -440,22 +454,55 @@ export default function AdminPanel() {
     cargarTodo();
   }
 
-  // ── ACCIONES USUARIOS ──────────────────────────────────────────
-  async function banearUsuario(u) {
-    await supabase.from("usuarios").update({ baneado: true }).eq("id", u.id);
-    // También suspender sus tiendas
-    await supabase.from("tiendas").update({ estado: "suspendida" }).eq("usuario_id", u.id);
-    showMsg(`Usuario ${u.nombre} baneado y sus tiendas suspendidas`);
-    cargarTodo();
+  // ── ACCIONES USUARIOS ────────────────────────────────────────────
+  async function banearUsuario(u, multa) {
+    // FIX 3: buscar tiendas por el auth_id del usuario (campo usuario_id en tiendas
+    // corresponde al UUID de auth, no al id de la tabla usuarios).
+    // Primero actualizamos el registro del usuario.
+    const { error: errU } = await supabase.from("usuarios").update({
+      baneado: true,
+      multa_reactivacion: multa ? parseFloat(multa) : null,
+    }).eq("id", u.id);
+    if (errU) { showMsg("Error al banear: " + errU.message, "err"); return; }
+
+    // Suspender tiendas usando el email como puente seguro
+    // (usuario.email → tiendas via tabla usuarios.email = tiendas.owner_email, o
+    //  si tiendas.usuario_id es el auth uuid, lo buscamos desde auth)
+    // Estrategia robusta: suspender por usuario_id usando el campo que guarda el auth uuid.
+    // En la inserción de tiendas se usa authUser.id (el UUID de supabase.auth).
+    // El campo u.id en tabla usuarios puede ser distinto; usamos u.email para localizar.
+    const { data: tiendasUsuario } = await supabase
+      .from("tiendas")
+      .select("id")
+      .eq("usuario_id", u.auth_uid || u.id); // preferir auth_uid si existe
+
+    if (tiendasUsuario && tiendasUsuario.length > 0) {
+      const ids = tiendasUsuario.map(t => t.id);
+      await supabase.from("tiendas").update({ estado: "suspendida" }).in("id", ids);
+    }
+
+    showMsg(`Usuario ${u.nombre} baneado${multa ? ` (multa S/ ${multa})` : " (permanente)"}`);
+    cargarTodo(); syncModal(null);
   }
 
   async function desbanearUsuario(u) {
-    await supabase.from("usuarios").update({ baneado: false }).eq("id", u.id);
+    await supabase.from("usuarios").update({
+      baneado: false,
+      multa_reactivacion: null,
+    }).eq("id", u.id);
+    // Reactivar sus tiendas
+    const { data: tiendasUsuario } = await supabase
+      .from("tiendas").select("id")
+      .eq("usuario_id", u.auth_uid || u.id);
+    if (tiendasUsuario && tiendasUsuario.length > 0) {
+      const ids = tiendasUsuario.map(t => t.id);
+      await supabase.from("tiendas").update({ estado: "activa" }).in("id", ids);
+    }
     showMsg(`Usuario ${u.nombre} desbaneado ✅`);
     cargarTodo();
   }
 
-  // ── ACCIONES REPORTES ──────────────────────────────────────────
+  // ── ACCIONES REPORTES ────────────────────────────────────────────
   async function marcarReporteRevisado(r) {
     await supabase.from("reportes").update({ estado: "revisado" }).eq("id", r.id);
     showMsg("Reporte marcado como revisado");
@@ -463,39 +510,45 @@ export default function AdminPanel() {
   }
 
   async function eliminarProducto(p) {
-    await supabase.from("productos").delete().eq("id", p.id);
+    const { error } = await supabase.from("productos").delete().eq("id", p.id);
+    if (error) { showMsg("Error al eliminar: " + error.message, "err"); return; }
     showMsg(`Producto "${p.nombre}" eliminado`);
     cargarTodo();
   }
 
-  // ── FINANZAS ───────────────────────────────────────────────────
-  const totalPagado = pagos.filter(p => p.estado === "pagado").reduce((s, p) => s + (p.monto || 0), 0);
-  const totalEsperado = tiendas.length * 5; // estimado: cada tienda debería haber pagado S/5
-  const pagosHoy = pagos.filter(p => {
+  // ── FINANZAS ─────────────────────────────────────────────────────
+  const totalPagado   = pagos.filter(p => p.estado === "pagado").reduce((s, p) => s + (p.monto || 0), 0);
+  const totalEsperado = tiendas.length * 5;
+  const pagosHoy      = pagos.filter(p => {
     const hoy = new Date().toDateString();
     return new Date(p.created_at).toDateString() === hoy && p.estado === "pagado";
   }).reduce((s, p) => s + (p.monto || 0), 0);
 
-  // ── STATS DASHBOARD ────────────────────────────────────────────
-  const reportesPendientes = reportes.filter(r => r.estado !== "revisado").length;
-  const tiendasActivas = tiendas.filter(t => t.estado === "activa").length;
-  const tiendasSuspendidas = tiendas.filter(t => t.estado === "suspendida").length;
-  const usuariosBaneados = usuarios.filter(u => u.baneado).length;
+  // ── STATS DASHBOARD ──────────────────────────────────────────────
+  const reportesPendientes  = reportes.filter(r => r.estado !== "revisado").length;
+  const tiendasActivas      = tiendas.filter(t => t.estado === "activa").length;
+  const tiendasSuspendidas  = tiendas.filter(t => t.estado === "suspendida").length;
+  const usuariosBaneados    = usuarios.filter(u => u.baneado).length;
 
-  // ── FILTROS ────────────────────────────────────────────────────
-  const tiendasFilt = tiendas.filter(t => t.nombre?.toLowerCase().includes(busT.toLowerCase()));
-  const usuariosFilt = usuarios.filter(u => u.nombre?.toLowerCase().includes(busU.toLowerCase()) || u.email?.toLowerCase().includes(busU.toLowerCase()));
+  // ── FILTROS ──────────────────────────────────────────────────────
+  const tiendasFilt   = tiendas.filter(t => t.nombre?.toLowerCase().includes(busT.toLowerCase()));
+  const usuariosFilt  = usuarios.filter(u =>
+    u.nombre?.toLowerCase().includes(busU.toLowerCase()) ||
+    u.email?.toLowerCase().includes(busU.toLowerCase())
+  );
   const productosFilt = productos.filter(p => p.nombre?.toLowerCase().includes(busP.toLowerCase()));
 
-  // ── HELPERS ───────────────────────────────────────────────────
-  const fecha = (d) => d ? new Date(d).toLocaleDateString("es-PE", { day:"2-digit", month:"short", year:"numeric" }) : "—";
+  // ── HELPERS ──────────────────────────────────────────────────────
+  const fecha = (d) => d
+    ? new Date(d).toLocaleDateString("es-PE", { day:"2-digit", month:"short", year:"numeric" })
+    : "—";
 
   function estadoBadge(estado) {
     const map = { activa:"badge-green", suspendida:"badge-red", revision:"badge-yellow", inactiva:"badge-orange" };
     return <span className={`badge ${map[estado] || "badge-blue"}`}>● {estado || "—"}</span>;
   }
 
-  // ── LOGIN / ACCESO DENEGADO ────────────────────────────────────
+  // ── PANTALLAS: LOGIN / CARGANDO / ACCESO DENEGADO ────────────────
   if (esAdmin === null) return (
     <div style={{ minHeight:"100vh", background:"#0D0F14", display:"flex", alignItems:"center", justifyContent:"center" }}>
       <style>{CSS}</style>
@@ -511,7 +564,7 @@ export default function AdminPanel() {
         <p className="login-title">Panel de Administración</p>
         <p className="login-sub">TinkaMarket — Acceso restringido</p>
         <button className="login-btn" onClick={login}>
-          <span>G</span> Iniciar sesión con Google
+          <span style={{ fontWeight:900, fontSize:18 }}>G</span> Iniciar sesión con Google
         </button>
         {usuario && esAdmin === false && (
           <div className="access-denied">
@@ -523,7 +576,7 @@ export default function AdminPanel() {
     </div>
   );
 
-  // ── PANEL PRINCIPAL ────────────────────────────────────────────
+  // ── PANEL PRINCIPAL ──────────────────────────────────────────────
   return (
     <div className="admin-layout">
       <style>{CSS}</style>
@@ -539,11 +592,13 @@ export default function AdminPanel() {
         </div>
 
         <nav className="sidebar-nav">
-          {SECCIONES.map((s, i) => (
+          {SECCIONES.map(s => (
             <div key={s.id}>
               {s.section && <p className="nav-section">{s.section}</p>}
-              <div className={`nav-item ${seccion === s.id ? "active" : ""}`}
-                onClick={() => setSeccion(s.id)}>
+              <div
+                className={`nav-item ${seccion === s.id ? "active" : ""}`}
+                onClick={() => setSeccion(s.id)}
+              >
                 <span className="nav-icon">{s.icon}</span>
                 {s.label}
                 {s.id === "reportes" && reportesPendientes > 0 && (
@@ -568,69 +623,56 @@ export default function AdminPanel() {
 
       {/* MAIN */}
       <main className="main">
-        {/* TOPBAR */}
         <div className="topbar">
           <div>
             <p className="topbar-title">
-              {SECCIONES.find(s => s.id === seccion)?.icon} {SECCIONES.find(s => s.id === seccion)?.label}
+              {SECCIONES.find(s => s.id === seccion)?.icon}{" "}
+              {SECCIONES.find(s => s.id === seccion)?.label}
             </p>
-            <p className="topbar-sub">TinkaMarket Admin · {new Date().toLocaleDateString("es-PE", { weekday:"long", day:"numeric", month:"long" })}</p>
+            <p className="topbar-sub">
+              TinkaMarket Admin ·{" "}
+              {new Date().toLocaleDateString("es-PE", { weekday:"long", day:"numeric", month:"long" })}
+            </p>
           </div>
           <div className="topbar-right">
             <div className="status-dot" />
             <span style={{ fontSize:12, color:"var(--muted)" }}>En línea</span>
-            <button className="btn-primary-dark" onClick={cargarTodo} style={{ padding:"7px 14px", fontSize:12 }}>↻ Actualizar</button>
+            <button
+              className="btn-primary-dark"
+              onClick={cargarTodo}
+              style={{ padding:"7px 14px", fontSize:12 }}
+            >↻ Actualizar</button>
           </div>
         </div>
 
         <div className="content">
           {msg && <div className={msgTipo === "ok" ? "msg-ok-dark" : "msg-err-dark"}>{msg}</div>}
 
-          {/* ── DASHBOARD ── */}
+          {/* ══ DASHBOARD ══ */}
           {seccion === "dashboard" && <>
             <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-icon">🏪</div>
-                <p className="stat-label">Tiendas activas</p>
-                <p className="stat-val" style={{ color:"var(--green)" }}>{tiendasActivas}</p>
-                <p className="stat-sub">{tiendasSuspendidas} suspendidas</p>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">👥</div>
-                <p className="stat-label">Usuarios</p>
-                <p className="stat-val" style={{ color:"var(--blue)" }}>{usuarios.length}</p>
-                <p className="stat-sub">{usuariosBaneados} baneados</p>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">📦</div>
-                <p className="stat-label">Productos</p>
-                <p className="stat-val" style={{ color:"var(--accent2)" }}>{productos.length}</p>
-                <p className="stat-sub">publicados en total</p>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">🚨</div>
-                <p className="stat-label">Reportes pendientes</p>
-                <p className="stat-val" style={{ color: reportesPendientes > 0 ? "var(--red)" : "var(--green)" }}>{reportesPendientes}</p>
-                <p className="stat-sub">{reportes.length} en total</p>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">💰</div>
-                <p className="stat-label">Ingresos totales</p>
-                <p className="stat-val" style={{ color:"var(--gold)" }}>S/ {totalPagado.toFixed(2)}</p>
-                <p className="stat-sub">S/ {pagosHoy.toFixed(2)} hoy</p>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">🎁</div>
-                <p className="stat-label">Beneficios otorgados</p>
-                <p className="stat-val" style={{ color:"var(--gold)" }}>{beneficios.length}</p>
-                <p className="stat-sub">por administración</p>
-              </div>
+              {[
+                { icon:"🏪", label:"Tiendas activas",      val:tiendasActivas,     sub:`${tiendasSuspendidas} suspendidas`,  color:"var(--green)" },
+                { icon:"👥", label:"Usuarios",              val:usuarios.length,    sub:`${usuariosBaneados} baneados`,       color:"var(--blue)" },
+                { icon:"📦", label:"Productos",             val:productos.length,   sub:"publicados en total",                color:"var(--accent2)" },
+                { icon:"🚨", label:"Reportes pendientes",   val:reportesPendientes, sub:`${reportes.length} en total`,        color: reportesPendientes > 0 ? "var(--red)" : "var(--green)" },
+                { icon:"💰", label:"Ingresos totales",      val:`S/ ${totalPagado.toFixed(2)}`, sub:`S/ ${pagosHoy.toFixed(2)} hoy`, color:"var(--gold)" },
+                { icon:"🎁", label:"Beneficios otorgados",  val:beneficios.length,  sub:"por administración",                 color:"var(--gold)" },
+              ].map((c, i) => (
+                <div key={i} className="stat-card">
+                  <div className="stat-icon">{c.icon}</div>
+                  <p className="stat-label">{c.label}</p>
+                  <p className="stat-val" style={{ color: c.color }}>{c.val}</p>
+                  <p className="stat-sub">{c.sub}</p>
+                </div>
+              ))}
             </div>
 
-            {/* Reportes recientes */}
             {reportesPendientes > 0 && <>
-              <p style={{ fontFamily:"var(--font-h)", fontWeight:700, marginBottom:14, color:"var(--red)" }}>🚨 Reportes pendientes</p>
-              {reportes.filter(r => r.estado !== "revisado").slice(0,3).map(r => (
+              <p style={{ fontFamily:"var(--font-h)", fontWeight:700, marginBottom:14, color:"var(--red)" }}>
+                🚨 Reportes pendientes
+              </p>
+              {reportes.filter(r => r.estado !== "revisado").slice(0, 3).map(r => (
                 <div key={r.id} className="reporte-card">
                   <div className="reporte-head">
                     <span className={`badge ${r.tipo === "bug" ? "badge-blue" : "badge-red"}`}>{r.tipo}</span>
@@ -644,9 +686,9 @@ export default function AdminPanel() {
             </>}
           </>}
 
-          {/* ── REPORTES ── */}
-          {seccion === "reportes" && <>
-            {reportes.length === 0
+          {/* ══ REPORTES ══ */}
+          {seccion === "reportes" && (
+            reportes.length === 0
               ? <div className="empty-dark"><div className="empty-icon">✅</div><p className="empty-txt">Sin reportes pendientes</p></div>
               : reportes.map(r => (
                 <div key={r.id} className="reporte-card">
@@ -660,150 +702,163 @@ export default function AdminPanel() {
                   <p className="reporte-motivo">{r.motivo}</p>
                   <p className="id-mono" style={{ marginBottom:10 }}>Reportado por ID: {r.reportado_por}</p>
                   {r.estado !== "revisado" && (
-                    <button className="btn-action btn-ok" onClick={() => marcarReporteRevisado(r)}>✓ Marcar como revisado</button>
+                    <button className="btn-action btn-ok" onClick={() => marcarReporteRevisado(r)}>
+                      ✓ Marcar como revisado
+                    </button>
                   )}
                 </div>
               ))
-            }
-          </>}
+          )}
 
-          {/* ── TIENDAS ── */}
-          {seccion === "tiendas" && <>
+          {/* ══ TIENDAS ══ */}
+          {seccion === "tiendas" && (
             <div className="table-wrap">
               <div className="table-head">
                 <p className="table-title">Todas las tiendas ({tiendas.length})</p>
-                <input className="search-inp-dark" placeholder="🔍 Buscar tienda..." value={busT} onChange={e => setBusT(e.target.value)} />
+                <input className="search-inp-dark" placeholder="🔍 Buscar tienda..."
+                  value={busT} onChange={e => setBusT(e.target.value)} />
               </div>
-              {cargando ? <div className="loading"><div className="spinner" /><span>Cargando...</span></div>
-                : tiendasFilt.length === 0 ? <div className="empty-dark"><p className="empty-txt">Sin resultados</p></div>
-                : <table>
-                  <thead><tr>
-                    <th>Tienda</th><th>Ubicación</th><th>WhatsApp</th><th>Estado</th><th>Creada</th><th>Acciones</th>
-                  </tr></thead>
-                  <tbody>
-                    {tiendasFilt.map(t => (
-                      <tr key={t.id}>
-                        <td>
-                          <p style={{ fontWeight:700, fontSize:14 }}>{t.nombre}</p>
-                          {t.verificada && <span className="badge badge-blue" style={{ fontSize:10 }}>✓ Verificada</span>}
-                        </td>
-                        <td style={{ color:"var(--muted)", fontSize:12 }}>{t.distrito}, {t.provincia}<br/>{t.departamento}</td>
-                        <td><span className="id-mono">{t.whatsapp}</span></td>
-                        <td>{estadoBadge(t.estado)}</td>
-                        <td><span className="id-mono">{fecha(t.created_at)}</span></td>
-                        <td>
-                          {t.estado === "activa"
-                            ? <button className="btn-action btn-ban" onClick={() => cambiarEstadoTienda(t, "suspendida")}>🚫 Suspender</button>
-                            : <button className="btn-action btn-ok" onClick={() => cambiarEstadoTienda(t, "activa")}>✓ Activar</button>
-                          }
-                          <button className="btn-action btn-blue" onClick={() => cambiarEstadoTienda(t, "revision")}>👁 Revisión</button>
-                          {!t.verificada && <button className="btn-action btn-gold" onClick={() => verificarTienda(t)}>✓ Verificar</button>}
-                          <button className="btn-action btn-ok" onClick={() => { setModal({ tipo:"renovar", data:t }); setModalForm({}); }}>↻ Renovar</button>
-                          <button className="btn-action btn-gold" onClick={() => { setModal({ tipo:"productos", data:t }); setModalForm({ cantidad:"5" }); }}>🎁 + Productos</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {cargando
+                ? <div className="loading"><div className="spinner" /><span>Cargando...</span></div>
+                : tiendasFilt.length === 0
+                  ? <div className="empty-dark"><p className="empty-txt">Sin resultados</p></div>
+                  : <table>
+                    <thead><tr>
+                      <th>Tienda</th><th>Ubicación</th><th>WhatsApp</th><th>Estado</th><th>Creada</th><th>Acciones</th>
+                    </tr></thead>
+                    <tbody>
+                      {tiendasFilt.map(t => (
+                        <tr key={t.id}>
+                          <td>
+                            <p style={{ fontWeight:700, fontSize:14 }}>{t.nombre}</p>
+                            {t.verificada && <span className="badge badge-blue" style={{ fontSize:10 }}>✓ Verificada</span>}
+                          </td>
+                          <td style={{ color:"var(--muted)", fontSize:12 }}>{t.distrito}, {t.provincia}<br/>{t.departamento}</td>
+                          <td><span className="id-mono">{t.whatsapp}</span></td>
+                          <td>{estadoBadge(t.estado)}</td>
+                          <td><span className="id-mono">{fecha(t.created_at)}</span></td>
+                          <td>
+                            {t.estado === "activa"
+                              ? <button className="btn-action btn-ban" onClick={() => cambiarEstadoTienda(t, "suspendida")}>🚫 Suspender</button>
+                              : <button className="btn-action btn-ok"  onClick={() => cambiarEstadoTienda(t, "activa")}>✓ Activar</button>
+                            }
+                            <button className="btn-action btn-blue" onClick={() => cambiarEstadoTienda(t, "revision")}>👁 Revisión</button>
+                            {!t.verificada && (
+                              <button className="btn-action btn-gold" onClick={() => verificarTienda(t)}>✓ Verificar</button>
+                            )}
+                            <button className="btn-action btn-ok" onClick={() => { syncModal({ tipo:"renovar", data:t }); setModalForm({}); }}>↻ Renovar</button>
+                            <button className="btn-action btn-gold" onClick={() => { syncModal({ tipo:"productos", data:t }); setModalForm({ cantidad:"5" }); }}>🎁 + Productos</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
               }
             </div>
-          </>}
+          )}
 
-          {/* ── USUARIOS ── */}
-          {seccion === "usuarios" && <>
+          {/* ══ USUARIOS ══ */}
+          {seccion === "usuarios" && (
             <div className="table-wrap">
               <div className="table-head">
                 <p className="table-title">Todos los usuarios ({usuarios.length})</p>
-                <input className="search-inp-dark" placeholder="🔍 Buscar usuario..." value={busU} onChange={e => setBusU(e.target.value)} />
+                <input className="search-inp-dark" placeholder="🔍 Buscar usuario..."
+                  value={busU} onChange={e => setBusU(e.target.value)} />
               </div>
-              {cargando ? <div className="loading"><div className="spinner" /><span>Cargando...</span></div>
-                : usuariosFilt.length === 0 ? <div className="empty-dark"><p className="empty-txt">Sin resultados</p></div>
-                : <table>
-                  <thead><tr>
-                    <th>Nombre</th><th>Email</th><th>ID</th><th>Ubicación</th><th>Estado</th><th>Acciones</th>
-                  </tr></thead>
-                  <tbody>
-                    {usuariosFilt.map(u => (
-                      <tr key={u.id}>
-                        <td style={{ fontWeight:700 }}>{u.nombre}</td>
-                        <td style={{ color:"var(--muted)", fontSize:12 }}>{u.email}</td>
-                        <td><span className="id-mono">{u.usuario_id}</span></td>
-                        <td style={{ color:"var(--muted)", fontSize:12 }}>{u.distrito}, {u.provincia}</td>
-                        <td>
-                          {u.baneado
-                            ? <span className="badge badge-red">🚫 Baneado</span>
-                            : <span className="badge badge-green">● Activo</span>
-                          }
-                        </td>
-                        <td>
-                          {u.baneado
-                            ? <button className="btn-action btn-ok" onClick={() => desbanearUsuario(u)}>✓ Desbanear</button>
-                            : <button className="btn-action btn-ban" onClick={() => banearUsuario(u)}>🚫 Banear</button>
-                          }
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {cargando
+                ? <div className="loading"><div className="spinner" /><span>Cargando...</span></div>
+                : usuariosFilt.length === 0
+                  ? <div className="empty-dark"><p className="empty-txt">Sin resultados</p></div>
+                  : <table>
+                    <thead><tr>
+                      <th>Nombre</th><th>Email</th><th>ID</th><th>Ubicación</th><th>Estado</th><th>Acciones</th>
+                    </tr></thead>
+                    <tbody>
+                      {usuariosFilt.map(u => (
+                        <tr key={u.id}>
+                          <td style={{ fontWeight:700 }}>{u.nombre} {u.apellidos || ""}</td>
+                          <td style={{ color:"var(--muted)", fontSize:12 }}>{u.email}</td>
+                          <td><span className="id-mono">{u.usuario_id}</span></td>
+                          <td style={{ color:"var(--muted)", fontSize:12 }}>{u.distrito}, {u.provincia}</td>
+                          <td>
+                            {u.baneado
+                              ? <span className="badge badge-red">
+                                  🚫 Baneado{u.multa_reactivacion ? ` · S/ ${u.multa_reactivacion}` : " · permanente"}
+                                </span>
+                              : <span className="badge badge-green">● Activo</span>
+                            }
+                          </td>
+                          <td>
+                            {u.baneado
+                              ? <button className="btn-action btn-ok"  onClick={() => desbanearUsuario(u)}>✓ Desbanear</button>
+                              : <button className="btn-action btn-ban" onClick={() => { syncModal({ tipo:"banear", data:u }); setModalForm({ multa:"" }); }}>🚫 Banear</button>
+                            }
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
               }
             </div>
-          </>}
+          )}
 
-          {/* ── PRODUCTOS ── */}
-          {seccion === "productos" && <>
+          {/* ══ PRODUCTOS ══ */}
+          {seccion === "productos" && (
             <div className="table-wrap">
               <div className="table-head">
                 <p className="table-title">Todos los productos ({productos.length})</p>
-                <input className="search-inp-dark" placeholder="🔍 Buscar producto..." value={busP} onChange={e => setBusP(e.target.value)} />
+                <input className="search-inp-dark" placeholder="🔍 Buscar producto..."
+                  value={busP} onChange={e => setBusP(e.target.value)} />
               </div>
-              {cargando ? <div className="loading"><div className="spinner" /><span>Cargando...</span></div>
-                : productosFilt.length === 0 ? <div className="empty-dark"><p className="empty-txt">Sin resultados</p></div>
-                : <table>
-                  <thead><tr>
-                    <th>Producto</th><th>Precio</th><th>Cantidad</th><th>Categoría</th><th>Likes</th><th>Acciones</th>
-                  </tr></thead>
-                  <tbody>
-                    {productosFilt.map(p => (
-                      <tr key={p.id}>
-                        <td style={{ fontWeight:700 }}>{p.nombre}</td>
-                        <td style={{ color:"var(--accent2)", fontWeight:800, fontFamily:"var(--font-h)" }}>S/ {p.precio}</td>
-                        <td>{p.cantidad}</td>
-                        <td><span className="badge badge-blue">{p.categoria}</span></td>
-                        <td>❤️ {p.likes}</td>
-                        <td>
-                          <button className="btn-action btn-ban" onClick={() => eliminarProducto(p)}>🗑 Eliminar</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {cargando
+                ? <div className="loading"><div className="spinner" /><span>Cargando...</span></div>
+                : productosFilt.length === 0
+                  ? <div className="empty-dark"><p className="empty-txt">Sin resultados</p></div>
+                  : <table>
+                    <thead><tr>
+                      <th>Foto</th><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Categoría</th><th>Likes</th><th>Acciones</th>
+                    </tr></thead>
+                    <tbody>
+                      {productosFilt.map(p => (
+                        <tr key={p.id}>
+                          <td>
+                            {p.fotos && p.fotos[0]
+                              ? <img src={p.fotos[0]} alt={p.nombre}
+                                  style={{ width:40, height:40, borderRadius:8, objectFit:"cover" }} />
+                              : <span style={{ fontSize:20 }}>📦</span>
+                            }
+                          </td>
+                          <td style={{ fontWeight:700 }}>{p.nombre}</td>
+                          <td style={{ color:"var(--accent2)", fontWeight:800, fontFamily:"var(--font-h)" }}>S/ {p.precio}</td>
+                          <td>{p.cantidad}</td>
+                          <td><span className="badge badge-blue">{p.categoria}</span></td>
+                          <td>❤️ {p.likes}</td>
+                          <td>
+                            <button className="btn-action btn-ban" onClick={() => eliminarProducto(p)}>🗑 Eliminar</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
               }
             </div>
-          </>}
+          )}
 
-          {/* ── FINANZAS ── */}
+          {/* ══ FINANZAS ══ */}
           {seccion === "finanzas" && <>
             <div className="finance-grid">
-              <div className="finance-card">
-                <p className="finance-label">💰 Total ingresado (Culqi)</p>
-                <p className="finance-val">S/ {totalPagado.toFixed(2)}</p>
-                <p className="finance-sub">Debería estar en tu BCP</p>
-              </div>
-              <div className="finance-card">
-                <p className="finance-label">📅 Ingresos hoy</p>
-                <p className="finance-val" style={{ color:"var(--green)" }}>S/ {pagosHoy.toFixed(2)}</p>
-                <p className="finance-sub">Pagos del día</p>
-              </div>
-              <div className="finance-card">
-                <p className="finance-label">📊 Estimado esperado</p>
-                <p className="finance-val" style={{ color:"var(--yellow)" }}>S/ {totalEsperado.toFixed(2)}</p>
-                <p className="finance-sub">{tiendas.length} tiendas × S/5 activación</p>
-              </div>
-              <div className="finance-card">
-                <p className="finance-label">🎁 Beneficios gratuitos</p>
-                <p className="finance-val" style={{ color:"var(--muted)" }}>{beneficios.length}</p>
-                <p className="finance-sub">otorgados por admin</p>
-              </div>
+              {[
+                { label:"💰 Total ingresado (Culqi)", val:`S/ ${totalPagado.toFixed(2)}`,   sub:"Debería estar en tu BCP",           color:"var(--gold)" },
+                { label:"📅 Ingresos hoy",             val:`S/ ${pagosHoy.toFixed(2)}`,      sub:"Pagos del día",                     color:"var(--green)" },
+                { label:"📊 Estimado esperado",        val:`S/ ${totalEsperado.toFixed(2)}`, sub:`${tiendas.length} tiendas × S/5`,   color:"var(--yellow)" },
+                { label:"🎁 Beneficios gratuitos",     val:beneficios.length,                sub:"otorgados por admin",               color:"var(--muted)" },
+              ].map((c, i) => (
+                <div key={i} className="finance-card">
+                  <p className="finance-label">{c.label}</p>
+                  <p className="finance-val" style={{ color: c.color }}>{c.val}</p>
+                  <p className="finance-sub">{c.sub}</p>
+                </div>
+              ))}
             </div>
 
             <div className="table-wrap">
@@ -811,7 +866,11 @@ export default function AdminPanel() {
                 <p className="table-title">Registro de pagos ({pagos.length})</p>
               </div>
               {pagos.length === 0
-                ? <div className="empty-dark"><div className="empty-icon">💳</div><p className="empty-txt">Aún no hay pagos registrados</p><p style={{ fontSize:12, color:"var(--muted)", marginTop:8 }}>Los pagos aparecerán aquí cuando Culqi esté activo</p></div>
+                ? <div className="empty-dark">
+                    <div className="empty-icon">💳</div>
+                    <p className="empty-txt">Aún no hay pagos registrados</p>
+                    <p style={{ fontSize:12, color:"var(--muted)", marginTop:8 }}>Los pagos aparecerán aquí cuando Culqi esté activo</p>
+                  </div>
                 : <table>
                   <thead><tr>
                     <th>Tipo</th><th>Monto</th><th>Estado</th><th>Fecha</th><th>Token Culqi</th>
@@ -823,7 +882,7 @@ export default function AdminPanel() {
                         <td style={{ color:"var(--gold)", fontWeight:800, fontFamily:"var(--font-h)" }}>S/ {p.monto}</td>
                         <td><span className={`badge ${p.estado === "pagado" ? "badge-green" : "badge-yellow"}`}>{p.estado}</span></td>
                         <td><span className="id-mono">{fecha(p.created_at)}</span></td>
-                        <td><span className="id-mono" style={{ fontSize:10 }}>{p.token_culqi?.slice(0,20) || "—"}...</span></td>
+                        <td><span className="id-mono" style={{ fontSize:10 }}>{p.token_culqi?.slice(0, 20) || "—"}…</span></td>
                       </tr>
                     ))}
                   </tbody>
@@ -832,8 +891,8 @@ export default function AdminPanel() {
             </div>
           </>}
 
-          {/* ── BENEFICIOS ── */}
-          {seccion === "beneficios" && <>
+          {/* ══ BENEFICIOS ══ */}
+          {seccion === "beneficios" && (
             <div className="table-wrap">
               <div className="table-head">
                 <p className="table-title">Beneficios otorgados ({beneficios.length})</p>
@@ -847,9 +906,12 @@ export default function AdminPanel() {
                   <tbody>
                     {beneficios.map(b => (
                       <tr key={b.id}>
+                        {/* FIX 2: badge-gold ahora existe en CSS */}
                         <td><span className={`badge ${b.tipo === "renovacion" ? "badge-green" : b.tipo === "verificacion" ? "badge-blue" : "badge-gold"}`}>{b.tipo}</span></td>
-                        <td><span className="id-mono">{b.tienda_id?.slice(0,12)}...</span></td>
-                        <td style={{ fontWeight:700 }}>{b.valor} {b.tipo === "renovacion" ? "días" : b.tipo === "productos_extra" ? "productos" : ""}</td>
+                        <td><span className="id-mono">{b.tienda_id?.slice(0, 12)}…</span></td>
+                        <td style={{ fontWeight:700 }}>
+                          {b.valor} {b.tipo === "renovacion" ? "días" : b.tipo === "productos_extra" ? "productos" : ""}
+                        </td>
                         <td style={{ color:"var(--muted)", fontSize:12 }}>{b.otorgado_por}</td>
                         <td><span className="id-mono">{fecha(b.created_at)}</span></td>
                       </tr>
@@ -858,38 +920,66 @@ export default function AdminPanel() {
                 </table>
               }
             </div>
-          </>}
+          )}
         </div>
       </main>
 
-      {/* ── MODALES ── */}
-      {modal && (
+      {/* ══ MODALES ══ */}
+      {/* FIX 6: solo renderizar si modal tiene data válida */}
+      {modal && modal.data && (
         <div className="modal-wrap">
-          <div className="modal-bg" onClick={() => setModal(null)} />
+          <div className="modal-bg" onClick={() => syncModal(null)} />
           <div className="modal-box">
 
-            {/* Modal renovar tienda */}
+            {/* Renovar tienda */}
             {modal.tipo === "renovar" && <>
               <p className="modal-title">↻ Renovar tienda</p>
-              <p className="modal-sub">Se renovará <strong>"{modal.data.nombre}"</strong> por 300 días adicionales sin costo. Esta acción queda registrada.</p>
+              <p className="modal-sub">
+                Se renovará <strong>"{modal.data.nombre}"</strong> por 300 días adicionales sin costo.
+                El contador de días se reiniciará desde hoy. Esta acción queda registrada.
+              </p>
               <div className="modal-actions">
-                <button className="btn-cancel" onClick={() => setModal(null)}>Cancelar</button>
+                <button className="btn-cancel" onClick={() => syncModal(null)}>Cancelar</button>
                 <button className="btn-primary-dark" onClick={() => renovarTienda(modal.data)}>Confirmar renovación</button>
               </div>
             </>}
 
-            {/* Modal ampliar productos */}
+            {/* Ampliar productos */}
             {modal.tipo === "productos" && <>
               <p className="modal-title">🎁 Ampliar productos</p>
-              <p className="modal-sub">Otorgar productos extra gratuitos a <strong>"{modal.data.nombre}"</strong> sin pago.</p>
+              <p className="modal-sub">
+                Otorgar publicaciones extra gratuitas a <strong>"{modal.data.nombre}"</strong> sin pago.
+                Se sumarán a su cupo actual.
+              </p>
               <input className="inp-dark" type="number" min="1" max="50"
                 placeholder="Cantidad de productos extra..."
                 value={modalForm.cantidad || ""}
                 onChange={e => setModalForm({ cantidad: e.target.value })} />
               <div className="modal-actions">
-                <button className="btn-cancel" onClick={() => setModal(null)}>Cancelar</button>
+                <button className="btn-cancel" onClick={() => syncModal(null)}>Cancelar</button>
                 <button className="btn-primary-dark" onClick={() => ampliarProductos(modal.data, modalForm.cantidad || 5)}>
-                  Otorgar {modalForm.cantidad || 5} productos
+                  Otorgar {modalForm.cantidad || 5} producto{(parseInt(modalForm.cantidad) || 5) !== 1 ? "s" : ""}
+                </button>
+              </div>
+            </>}
+
+            {/* Banear usuario */}
+            {modal.tipo === "banear" && <>
+              <p className="modal-title">🚫 Banear usuario</p>
+              <p className="modal-sub">
+                Vas a banear a <strong>"{modal.data.nombre}"</strong>. Sus tiendas quedarán suspendidas
+                e invisibles para los compradores. Define el monto de multa para poder reactivar,
+                o déjalo vacío para suspensión permanente sin opción de pago.
+              </p>
+              <input className="inp-dark" type="number" min="0" step="1"
+                placeholder="Monto de multa en soles (vacío = permanente)..."
+                value={modalForm.multa || ""}
+                onChange={e => setModalForm({ multa: e.target.value })} />
+              <div className="modal-actions">
+                <button className="btn-cancel" onClick={() => syncModal(null)}>Cancelar</button>
+                <button className="btn-primary-dark" style={{ background:"linear-gradient(135deg,#7B0000,#EF4444)" }}
+                  onClick={() => banearUsuario(modal.data, modalForm.multa)}>
+                  Confirmar baneo
                 </button>
               </div>
             </>}

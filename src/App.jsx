@@ -388,120 +388,6 @@ const CSS = `
     display: flex; align-items: center; justify-content: center; padding: 20px;
   }
 
-  /* ── FIX 1: Avatar de persona (sin foto de perfil de Google) ── */
-  .user-avatar-wrap {
-    width: 88px; height: 88px;
-    border-radius: 50%;
-    background: var(--grad);
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 14px;
-    box-shadow: 0 6px 24px rgba(192,57,43,0.35);
-    border: 3px solid rgba(255,255,255,0.5);
-    overflow: hidden;
-    position: relative;
-  }
-  .user-avatar-svg {
-    width: 52px; height: 52px;
-    fill: rgba(255,255,255,0.9);
-  }
-
-  /* ── FIX 4: Perfil de tienda estilo TikTok ── */
-  .tienda-profile-hero {
-    width: 100%;
-    background: var(--grad);
-    padding: 32px 20px 28px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 0;
-    border-radius: 0 0 28px 28px;
-  }
-  .tienda-profile-hero::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  }
-  .tienda-profile-avatar {
-    width: 96px; height: 96px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 4px solid rgba(255,255,255,0.8);
-    box-shadow: 0 6px 24px rgba(0,0,0,0.25);
-    margin: 0 auto 14px;
-    display: block;
-    position: relative;
-    z-index: 1;
-  }
-  .tienda-profile-avatar-letter {
-    width: 96px; height: 96px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.2);
-    border: 4px solid rgba(255,255,255,0.7);
-    display: flex; align-items: center; justify-content: center;
-    color: white; font-weight: 900; font-size: 40px;
-    font-family: var(--font-head);
-    box-shadow: 0 6px 24px rgba(0,0,0,0.2);
-    margin: 0 auto 14px;
-    position: relative;
-    z-index: 1;
-  }
-  .tienda-profile-name {
-    color: white; font-family: var(--font-head);
-    font-weight: 900; font-size: 22px; margin-bottom: 6px;
-    position: relative; z-index: 1;
-  }
-  .tienda-profile-loc {
-    color: rgba(255,255,255,0.8); font-size: 13px;
-    margin-bottom: 4px; position: relative; z-index: 1;
-  }
-  .tienda-profile-desc {
-    color: rgba(255,255,255,0.75); font-size: 13px;
-    max-width: 420px; margin: 8px auto 0;
-    line-height: 1.55; position: relative; z-index: 1;
-  }
-  .tienda-profile-stats {
-    display: flex; justify-content: center; gap: 32px;
-    margin: 18px 0 0; position: relative; z-index: 1;
-  }
-  .tienda-profile-stat { text-align: center; }
-  .tienda-profile-stat-val {
-    color: white; font-family: var(--font-head);
-    font-weight: 900; font-size: 22px; line-height: 1;
-    margin-bottom: 3px;
-  }
-  .tienda-profile-stat-lbl {
-    color: rgba(255,255,255,0.7); font-size: 11px;
-    font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-  }
-  .tienda-profile-actions {
-    display: flex; gap: 10px; justify-content: center;
-    margin-top: 18px; position: relative; z-index: 1;
-  }
-  .btn-wa-pill {
-    background: #25D366; color: white;
-    border: none; border-radius: 50px;
-    padding: 10px 22px; font-size: 14px; font-weight: 800;
-    cursor: pointer; font-family: var(--font-body);
-    box-shadow: 0 3px 12px rgba(37,211,102,0.4);
-    transition: opacity 0.18s, transform 0.15s;
-    display: flex; align-items: center; gap: 7px;
-  }
-  .btn-wa-pill:hover { opacity: 0.9; transform: translateY(-1px); }
-
-  /* ── FIX 5: Días reales activos ── */
-  .dias-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.35);
-    border-radius: 100px;
-    padding: 5px 14px;
-    font-size: 12px; color: rgba(255,255,255,0.9);
-    font-weight: 700; margin-top: 8px;
-    position: relative; z-index: 1;
-  }
-  .dias-badge.venciendo { background: rgba(255,180,0,0.25); border-color: rgba(255,180,0,0.5); color: #FFE066; }
-  .dias-badge.vencido { background: rgba(255,60,60,0.25); border-color: rgba(255,60,60,0.5); color: #FF9999; }
-
   /* ── TIENDA DETALLE ── */
   .tienda-info-card {
     background: white; border-radius: var(--radius); padding: 24px;
@@ -761,181 +647,6 @@ const CSS = `
   }
   .prod-gallery-thumb.active { border-color: var(--rojo); }
 
-  /* ── ALERTA DIAS ── */
-  .alerta-dias {
-    background: linear-gradient(135deg, #FFF3CD, #FFE69C);
-    border: 2px solid #FFB800;
-    border-radius: 14px;
-    padding: 14px 18px;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .alerta-dias-icon { font-size: 24px; flex-shrink: 0; }
-  .alerta-dias-txt { font-size: 13px; color: #7A5A00; font-weight: 700; }
-
-  /* ── DASHBOARD MI TIENDA (layout imagen referencia) ── */
-  .tienda-dash {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 20px;
-    margin-bottom: 20px;
-  }
-  @media (max-width: 700px) {
-    .tienda-dash { grid-template-columns: 1fr; }
-  }
-  .tienda-dash-left {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  /* Avatar centrado en card */
-  .tienda-dash-avatar-card {
-    background: white;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 20px 16px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-  }
-  .tienda-dash-avatar {
-    width: 90px; height: 90px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid var(--rojo);
-    box-shadow: 0 4px 14px rgba(192,57,43,0.25);
-  }
-  .tienda-dash-avatar-letter {
-    width: 90px; height: 90px;
-    border-radius: 50%;
-    background: var(--grad);
-    display: flex; align-items: center; justify-content: center;
-    color: white; font-weight: 900; font-size: 36px;
-    font-family: var(--font-head);
-    border: 3px solid rgba(192,57,43,0.3);
-    box-shadow: 0 4px 14px rgba(192,57,43,0.25);
-  }
-  .tienda-dash-name {
-    font-family: var(--font-head);
-    font-weight: 900; font-size: 16px;
-    color: var(--cafe); margin: 0;
-  }
-  .tienda-dash-handle {
-    font-size: 13px; color: var(--rojo); font-weight: 700;
-  }
-  .tienda-dash-loc {
-    font-size: 12px; color: var(--muted);
-  }
-  .tienda-dash-wa {
-    font-size: 12px; color: var(--muted);
-    display: flex; align-items: center; gap: 4px; justify-content: center;
-  }
-  /* Stats verticales */
-  .tienda-dash-stats {
-    background: white;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-  .tienda-dash-stat {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid #F0EAE0;
-  }
-  .tienda-dash-stat:last-child { border-bottom: none; }
-  .tienda-dash-stat-lbl {
-    font-size: 11px; color: var(--muted);
-    font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-  }
-  .tienda-dash-stat-val {
-    font-family: var(--font-head);
-    font-size: 22px; font-weight: 900; color: var(--rojo);
-  }
-  /* Salud de la tienda */
-  .tienda-dash-salud {
-    background: white;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 16px;
-  }
-  .tienda-dash-salud-title {
-    font-family: var(--font-head);
-    font-weight: 800; font-size: 13px;
-    color: var(--cafe); margin-bottom: 14px;
-    text-transform: uppercase; letter-spacing: 0.5px;
-  }
-  /* Grid de productos en Mi Tienda */
-  .tienda-dash-right {
-    display: flex;
-    flex-direction: column;
-  }
-  .tienda-dash-prods-title {
-    font-family: var(--font-head);
-    font-weight: 800; font-size: 14px;
-    color: var(--cafe);
-    text-transform: uppercase; letter-spacing: 0.5px;
-    margin-bottom: 12px;
-  }
-  .tienda-dash-prods-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 12px;
-    flex: 1;
-  }
-  .tienda-dash-prod-card {
-    background: white;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: var(--shadow);
-    position: relative;
-  }
-  .tienda-dash-prod-img {
-    width: 100%; height: 110px;
-    object-fit: cover;
-    display: block;
-    background: var(--gris);
-  }
-  .tienda-dash-prod-img-placeholder {
-    width: 100%; height: 110px;
-    background: var(--gris);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 32px;
-  }
-  .tienda-dash-prod-body {
-    padding: 10px 10px 12px;
-  }
-  .tienda-dash-prod-name {
-    font-weight: 700; font-size: 12px;
-    color: var(--text); margin-bottom: 2px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .tienda-dash-prod-meta {
-    font-size: 11px; color: var(--muted); margin-bottom: 4px;
-  }
-  .tienda-dash-prod-price-row {
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .tienda-dash-prod-price {
-    font-family: var(--font-head);
-    font-weight: 900; font-size: 16px; color: var(--rojo);
-  }
-  /* Badge días producto */
-  .prod-dias-badge {
-    font-size: 10px; font-weight: 800;
-    padding: 2px 7px; border-radius: 100px;
-    white-space: nowrap;
-  }
-  .prod-dias-activo { background: #E8F5EE; color: #1A7A4A; }
-  .prod-dias-gracia { background: #FFF3CD; color: #D4700A; }
-  .prod-dias-vencido { background: #FFECEC; color: #CC0000; }
-
   @media (max-width: 600px) {
     .nav { padding: 0 12px; gap: 10px; }
     .nav-brand { display: none; }
@@ -980,68 +691,6 @@ const UBIGEO = {
   "Ucayali":{"Coronel Portillo":["Callería","Campoverde","Iparia","Masisea","Yarinacocha","Nueva Requena","Manantay"],"Padre Abad":["Padre Abad","Irazola","Curimaná","Neshuya","Alexander Von Humboldt"],"Atalaya":["Raymondi","Sepahua","Tahuania","Yurúa"],"Purús":["Purús"]},
 };
 
-// ─── FIX 5: Calcular días activos reales ─────────────────────────────
-function calcularDiasActivos(tienda) {
-  if (!tienda?.created_at) return { dias: 0, estado: "activa", diasRestantes: 300 };
-  const creacion = new Date(tienda.created_at);
-  const ahora = new Date();
-  const diffMs = ahora - creacion;
-  const diasTranscurridos = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const LIMITE = 300;
-  const GRACIA = 10;
-
-  if (diasTranscurridos < LIMITE) {
-    return { dias: diasTranscurridos, estado: "activa", diasRestantes: LIMITE - diasTranscurridos };
-  } else if (diasTranscurridos < LIMITE + GRACIA) {
-    const diasGracia = diasTranscurridos - LIMITE;
-    return { dias: diasTranscurridos, estado: "gracia", diasRestantes: GRACIA - diasGracia, diasGracia };
-  } else {
-    return { dias: diasTranscurridos, estado: "vencida", diasRestantes: 0 };
-  }
-}
-
-// ─── Calcular días activos de un PRODUCTO (1–30, luego gracia 2 días) ──
-function calcularDiasProducto(prod) {
-  const LIMITE = 30;
-  const GRACIA = 2;
-
-  if (!prod.created_at) return { diaActual: 1, estado: "activo", diasRestantes: LIMITE };
-
-  const creacion = new Date(prod.created_at);
-  const ahora = new Date();
-  const diasTranscurridos = Math.floor((ahora - creacion) / (1000 * 60 * 60 * 24));
-  const diaActual = Math.min(diasTranscurridos + 1, LIMITE + GRACIA); // Día 1, 2, 3... (nunca 0)
-
-  if (diasTranscurridos < LIMITE) {
-    return { diaActual, estado: "activo", diasRestantes: LIMITE - diasTranscurridos };
-  } else if (diasTranscurridos < LIMITE + GRACIA) {
-    return { diaActual, estado: "gracia", diasRestantes: (LIMITE + GRACIA) - diasTranscurridos };
-  } else {
-    return { diaActual, estado: "vencido", diasRestantes: 0 };
-  }
-}
-
-// ─── FIX 1: Avatar SVG de persona (estilo WhatsApp) ──────────────────
-function PersonAvatar({ size = 88, style = {} }) {
-  return (
-    <div style={{
-      width: size, height: size,
-      borderRadius: "50%",
-      background: "linear-gradient(135deg, #7B1208 0%, #C0392B 40%, #E8651A 75%, #D4A017 100%)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      boxShadow: "0 6px 24px rgba(192,57,43,0.35)",
-      border: "3px solid rgba(255,255,255,0.5)",
-      flexShrink: 0,
-      ...style
-    }}>
-      <svg viewBox="0 0 100 100" style={{ width: size * 0.58, height: size * 0.58 }} fill="rgba(255,255,255,0.92)">
-        <circle cx="50" cy="35" r="22" />
-        <path d="M10 85 Q10 62 50 62 Q90 62 90 85 Z" />
-      </svg>
-    </div>
-  );
-}
-
 // ─── Culqi helpers ────────────────────────────────────────────────────
 function abrirPagoCulqi({ monto, descripcion, email, onSuccess }) {
   if (typeof window.Culqi === "undefined") {
@@ -1066,7 +715,7 @@ function abrirPagoCulqi({ monto, descripcion, email, onSuccess }) {
   };
 }
 
-// ─── FIX 5: Sonidos mejorados con botón atrás sonoro ─────────────────
+// ─── Sonidos ──────────────────────────────────────────────────────────
 function playSound(type) {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1081,27 +730,6 @@ function playSound(type) {
       gain.gain.setValueAtTime(0.18, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
       osc.start(); osc.stop(ctx.currentTime + 0.15);
-    } else if (type === "back") {
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(520, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(320, ctx.currentTime + 0.14);
-      gain.gain.setValueAtTime(0.22, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.14, ctx.currentTime + 0.07);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-      osc.start(); osc.stop(ctx.currentTime + 0.2);
-      setTimeout(() => {
-        try {
-          const ctx2 = new (window.AudioContext || window.webkitAudioContext)();
-          const o2 = ctx2.createOscillator();
-          const g2 = ctx2.createGain();
-          o2.connect(g2); g2.connect(ctx2.destination);
-          o2.type = "sine";
-          o2.frequency.value = 260;
-          g2.gain.setValueAtTime(0.16, ctx2.currentTime);
-          g2.gain.exponentialRampToValueAtTime(0.001, ctx2.currentTime + 0.18);
-          o2.start(); o2.stop(ctx2.currentTime + 0.18);
-        } catch(e) {}
-      }, 90);
     } else if (type === "success") {
       [523.25, 659.25, 783.99].forEach((freq, i) => {
         const o2 = ctx.createOscillator();
@@ -1150,12 +778,10 @@ function playSound(type) {
   }
 }
 
-// ─── Sub-componente: imagen de producto con galería (con fallback robusto) ──
+// ─── Sub-componente: imagen de producto con galería ───────────────────
 function ProdImgViewer({ fotos, fallbackIcon = "📦" }) {
   const [idx, setIdx] = useState(0);
-  const [error, setError] = useState(false);
-
-  if (!fotos || fotos.length === 0 || error) {
+  if (!fotos || fotos.length === 0) {
     return (
       <div className="prod-img">
         <span>{fallbackIcon}</span>
@@ -1165,7 +791,7 @@ function ProdImgViewer({ fotos, fallbackIcon = "📦" }) {
   return (
     <div style={{ display:"flex", flexDirection:"column" }}>
       <div className="prod-img">
-        <img src={fotos[idx]} alt="producto" onError={() => setError(true)} />
+        <img src={fotos[idx]} alt="producto" />
       </div>
       {fotos.length > 1 && (
         <div className="prod-gallery" style={{ padding:"6px 10px 0" }}>
@@ -1176,7 +802,6 @@ function ProdImgViewer({ fotos, fallbackIcon = "📦" }) {
               alt={`foto-${i}`}
               className={`prod-gallery-thumb ${i === idx ? "active" : ""}`}
               onClick={() => setIdx(i)}
-              onError={(e) => { e.target.style.opacity = "0.3"; }}
             />
           ))}
         </div>
@@ -1234,7 +859,7 @@ export default function App() {
     if (!perfil || !perfil.perfil_completo) {
       setMostrarPerfil(true); setPerfilDB(perfil);
     } else {
-      setPerfilDB(perfil); setMostrarPerfil(false); cargarMiTienda(user.id); cargarMisLikes(user.id);
+      setPerfilDB(perfil); setMostrarPerfil(false); cargarMiTienda(user.id); cargarMisLikes();
       if (perfil.departamento) {
         setTiendaForm(f => ({
           ...f,
@@ -1270,11 +895,9 @@ export default function App() {
     setProductos(data || []);
   }
 
-  // FIX 2: Cargar tiendas SIN filtro de estado para no perder tiendas
   async function cargarTiendas() {
-    const { data, error } = await supabase.from("tiendas").select("*");
-    if (error) console.error("Error cargando tiendas:", error);
-    setTiendas((data || []).filter(t => t.estado !== "eliminada"));
+    const { data } = await supabase.from("tiendas").select("*").eq("estado","activa");
+    setTiendas(data || []);
   }
 
   async function cargarMiTienda(uid) {
@@ -1287,11 +910,9 @@ export default function App() {
     const cat = filtroCat === "Todos" ? null : filtroCat;
     let qP = supabase.from("productos").select("*").ilike("nombre", `%${busqueda}%`).order("likes", { ascending:false });
     if (cat) qP = qP.eq("categoria", cat);
-    const qT = supabase.from("tiendas").select("*").ilike("nombre", `%${busqueda}%`);
+    const qT = supabase.from("tiendas").select("*").eq("estado","activa").ilike("nombre", `%${busqueda}%`);
     const [{ data:p }, { data:t }] = await Promise.all([qP, qT]);
-    setProductos(p || []);
-    setTiendas((t || []).filter(x => x.estado !== "eliminada"));
-    setPantalla("busqueda");
+    setProductos(p || []); setTiendas(t || []); setPantalla("busqueda");
   }
 
   async function login() {
@@ -1305,32 +926,21 @@ export default function App() {
     setPantalla("inicio"); setMenuOpen(false);
   }
 
-  // ─── FIX: Foto obligatoria para crear tienda ──────────────────────
   async function crearTienda() {
     if (!tiendaForm.nombre || !tiendaForm.whatsapp || !tiendaForm.departamento || !tiendaForm.provincia || !tiendaForm.distrito) {
       playSound("error"); setMsg("Completa los campos obligatorios."); return;
     }
-    if (!tiendaFoto) {
-      playSound("error"); setMsg("📷 Debes subir una foto o logo de tu tienda."); return;
-    }
     setGuardando(true);
-    const ext = (tiendaFoto.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
-    const path = `tiendas/${usuario.id}_${Date.now()}.${ext}`;
-    const { error: upErr } = await supabase.storage.from("fotos").upload(path, tiendaFoto, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType: tiendaFoto.type || "image/jpeg",
-    });
-    if (upErr) {
-      playSound("error");
-      console.error("Error subiendo foto de tienda:", upErr);
-      setMsg("Error al subir la foto. Verifica tu conexión e intenta de nuevo.");
-      setGuardando(false);
-      return;
+    let foto_url = null;
+    if (tiendaFoto) {
+      const ext = tiendaFoto.name.split(".").pop();
+      const path = `tiendas/${usuario.id}_${Date.now()}.${ext}`;
+      const { error:upErr } = await supabase.storage.from("fotos").upload(path, tiendaFoto);
+      if (!upErr) {
+        const { data:urlData } = supabase.storage.from("fotos").getPublicUrl(path);
+        foto_url = urlData.publicUrl;
+      }
     }
-    const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(path);
-    const foto_url = urlData.publicUrl;
-
     const { data:{ user: authUser } } = await supabase.auth.getUser();
     const { data, error } = await supabase.from("tiendas").insert({
       nombre: tiendaForm.nombre, whatsapp: tiendaForm.whatsapp,
@@ -1344,34 +954,20 @@ export default function App() {
     setGuardando(false);
   }
 
-  // ─── FIX: Foto obligatoria para publicar producto ─────────────────
   async function publicarProducto() {
     if (!prodForm.nombre || !prodForm.precio || !prodForm.cantidad) {
-      playSound("error"); setMsg("Completa nombre, precio y cantidad."); return;
-    }
-    if (prodFotos.length === 0) {
-      playSound("error"); setMsg("📷 Debes subir al menos una foto del producto."); return;
+      playSound("error"); setMsg("Completa los campos obligatorios."); return;
     }
     setGuardando(true);
     const fotos_urls = [];
     for (const foto of prodFotos.slice(0,4)) {
-      const ext = (foto.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g,"");
-      const safeName = `${miTienda.id}_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-      const path = `productos/${safeName}`;
-      const { error: upErr } = await supabase.storage.from("fotos").upload(path, foto, {
-        cacheControl: "3600",
-        upsert: false,
-        contentType: foto.type || "image/jpeg",
-      });
-      if (upErr) {
-        console.error("Error subiendo foto:", upErr);
-      } else {
+      const ext = foto.name.split(".").pop();
+      const path = `productos/${miTienda.id}_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("fotos").upload(path, foto);
+      if (!upErr) {
         const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(path);
-        if (urlData?.publicUrl) fotos_urls.push(urlData.publicUrl);
+        fotos_urls.push(urlData.publicUrl);
       }
-    }
-    if (fotos_urls.length === 0) {
-      playSound("error"); setMsg("Error al subir las fotos. Verifica tu conexión e intenta de nuevo."); setGuardando(false); return;
     }
     const { error } = await supabase.from("productos").insert({
       tienda_id: miTienda.id,
@@ -1392,36 +988,20 @@ export default function App() {
     setGuardando(false);
   }
 
-  async function cargarMisLikes(uid) {
-    const userId = uid || usuario?.id;
-    if (!userId) return;
-    const { data } = await supabase.from("likes").select("producto_id").eq("usuario_id", userId);
+  async function cargarMisLikes() {
+    if (!usuario) return;
+    const { data } = await supabase.from("likes").select("producto_id").eq("usuario_id", usuario.id);
     setMisLikes((data || []).map(l => l.producto_id));
   }
 
-  // ─── FIX: Likes atómicos vía RPC, no se pisan ni se duplican ──────
   async function darLike(prod) {
     if (!usuario) { login(); return; }
     if (misLikes.includes(prod.id)) return;
-
     playSound("like");
-    setMisLikes(l => [...l, prod.id]);
-    setProductos(prev => prev.map(p => p.id === prod.id ? { ...p, likes: (p.likes || 0) + 1 } : p));
-
-    const { error: likeError } = await supabase
-      .from("likes")
-      .insert({ usuario_id: usuario.id, producto_id: prod.id });
-
-    if (likeError) {
-      console.error("Error al dar like:", likeError);
-      setMisLikes(l => l.filter(id => id !== prod.id));
-      setProductos(prev => prev.map(p => p.id === prod.id ? { ...p, likes: prod.likes } : p));
-      return;
-    }
-
-    const { error: rpcError } = await supabase.rpc("incrementar_likes_producto", { p_id: prod.id });
-    if (rpcError) {
-      console.error("Error incrementando contador:", rpcError);
+    const { error } = await supabase.from("likes").insert({ usuario_id: usuario.id, producto_id: prod.id });
+    if (!error) {
+      await supabase.from("productos").update({ likes: prod.likes + 1 }).eq("id", prod.id);
+      setMisLikes(l => [...l, prod.id]);
       cargarProductos();
     }
   }
@@ -1478,14 +1058,13 @@ export default function App() {
   }
 
   const ir = (p) => { setPantalla(p); setMenuOpen(false); setMsg(""); window.scrollTo(0,0); };
-  const irAtras = (p) => { playSound("back"); ir(p); };
-
   const deps = Object.keys(UBIGEO).sort();
   const provsDisp = tiendaForm.departamento ? Object.keys(UBIGEO[tiendaForm.departamento] || {}).sort() : [];
   const distDisp = (tiendaForm.departamento && tiendaForm.provincia) ? (UBIGEO[tiendaForm.departamento]?.[tiendaForm.provincia] || []).sort() : [];
   const provsPerfilDisp = perfilForm.departamento ? Object.keys(UBIGEO[perfilForm.departamento] || {}).sort() : [];
   const distPerfilDisp = (perfilForm.departamento && perfilForm.provincia) ? (UBIGEO[perfilForm.departamento]?.[perfilForm.provincia] || []).sort() : [];
 
+  // ── Helper: primera foto de producto ──────────────────────────────
   const firstFoto = (p) => p.fotos && p.fotos.length > 0 ? p.fotos[0] : null;
 
   // ── MODAL PERFIL ─────────────────────────────────────────────────
@@ -1638,7 +1217,7 @@ export default function App() {
           const info = CATS_INFO.find(c => c.nombre === catNom);
           return <>
             <div className="back-row">
-              <button className="btn-back" onClick={() => { irAtras("inicio"); cargarProductos(); }}>←</button>
+              <button className="btn-back" onClick={() => { ir("inicio"); cargarProductos(); }}>←</button>
               <p className="sec-title" style={{ margin:0 }}>{info?.icon} {catNom}</p>
             </div>
             {productos.length === 0
@@ -1666,74 +1245,59 @@ export default function App() {
           </>;
         })()}
 
-        {/* ── PERFIL TIENDA estilo TikTok ── */}
+        {/* ── PERFIL TIENDA ── */}
         {pantalla.startsWith("tienda_") && (() => {
           const tid = pantalla.replace("tienda_","");
           const t = tiendas.find(x => x.id === tid);
           if (!t) return <div className="empty"><p className="empty-txt">Tienda no encontrada</p></div>;
           const prodsTienda = productos.filter(p => p.tienda_id === tid);
-          const totalLikes = prodsTienda.reduce((s, p) => s + (p.likes || 0), 0);
           return <>
-            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:0 }}>
-              <button className="btn-back" onClick={() => irAtras("inicio")} style={{ zIndex:10 }}>←</button>
+            <div className="back-row">
+              <button className="btn-back" onClick={() => ir("inicio")}>←</button>
+              <p className="sec-title" style={{ margin:0 }}>{t.nombre}</p>
             </div>
-            <div className="tienda-profile-hero" style={{ marginTop:-56, paddingTop:72 }}>
-              {t.foto_url
-                ? <img src={t.foto_url} alt={t.nombre} className="tienda-profile-avatar" />
-                : <div className="tienda-profile-avatar-letter">{t.nombre[0]}</div>
-              }
-              <h2 className="tienda-profile-name">{t.nombre}</h2>
-              <p className="tienda-profile-loc">📍 {t.distrito}, {t.provincia}, {t.departamento}</p>
-              {t.direccion_exacta && <p className="tienda-profile-loc">🏠 {t.direccion_exacta}</p>}
-              {t.descripcion && <p className="tienda-profile-desc">{t.descripcion}</p>}
-              <div className="tienda-profile-stats">
-                <div className="tienda-profile-stat">
-                  <p className="tienda-profile-stat-val">{prodsTienda.length}</p>
-                  <p className="tienda-profile-stat-lbl">Productos</p>
-                </div>
-                <div style={{ width:1, background:"rgba(255,255,255,0.25)", margin:"0 4px" }} />
-                <div className="tienda-profile-stat">
-                  <p className="tienda-profile-stat-val">{totalLikes}</p>
-                  <p className="tienda-profile-stat-lbl">❤️ Likes</p>
+            <div className="tienda-info-card">
+              <div className="tienda-info-head">
+                {t.foto_url
+                  ? <img src={t.foto_url} alt={t.nombre} className="tienda-big-avatar" />
+                  : <div className="tienda-big-letter">{t.nombre[0]}</div>
+                }
+                <div>
+                  <p style={{ fontFamily:"var(--font-head)", fontWeight:800, fontSize:18, marginBottom:5 }}>{t.nombre}</p>
+                  <p style={{ fontSize:13, color:"var(--muted)", marginBottom:3 }}>📍 {t.distrito}, {t.provincia}, {t.departamento}</p>
+                  {t.direccion_exacta && <p style={{ fontSize:13, color:"var(--muted)", marginBottom:3 }}>🏠 {t.direccion_exacta}</p>}
+                  {t.descripcion && <p style={{ fontSize:13, color:"#555", marginTop:6 }}>{t.descripcion}</p>}
                 </div>
               </div>
-              <div className="tienda-profile-actions">
-                <button className="btn-wa-pill" onClick={() => verWhatsApp(t)}>
-                  📲 Contactar por WhatsApp
-                </button>
-              </div>
-              <p className="notice" style={{ color:"rgba(255,255,255,0.55)", marginTop:10, position:"relative", zIndex:1 }}>
-                🔒 Tu ID queda registrado al contactar
-              </p>
+              <button className="btn-wa" onClick={() => verWhatsApp(t)}>📲 Contactar por WhatsApp</button>
+              <p className="notice">🔒 Al contactar se registra tu ID para seguridad de ambas partes</p>
             </div>
-            <div style={{ marginTop:24 }}>
-              {prodsTienda.length === 0
-                ? <div className="empty"><div className="empty-icon">📦</div><p className="empty-txt">Esta tienda aún no tiene productos</p></div>
-                : <div className="grid grid-prod">
-                  {prodsTienda.map(p => (
-                    <div key={p.id} className="prod-card">
-                      <ProdImgViewer fotos={p.fotos} />
-                      <div className="prod-body">
-                        <p className="prod-name">{p.nombre}</p>
-                        <p className="prod-price">S/ {p.precio}</p>
-                        {p.descripcion && <p style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>{p.descripcion}</p>}
-                        <button className="btn-primary" style={{ marginTop:8, marginBottom:0, fontSize:13, padding:"9px 0" }}
-                          onClick={() => { if(!usuario){login();return;} agregarCarrito(p,t); }}>
-                          Agregar al carrito
-                        </button>
-                      </div>
+            {prodsTienda.length === 0
+              ? <div className="empty"><div className="empty-icon">📦</div><p className="empty-txt">Esta tienda aún no tiene productos</p></div>
+              : <div className="grid grid-prod">
+                {prodsTienda.map(p => (
+                  <div key={p.id} className="prod-card">
+                    <ProdImgViewer fotos={p.fotos} />
+                    <div className="prod-body">
+                      <p className="prod-name">{p.nombre}</p>
+                      <p className="prod-price">S/ {p.precio}</p>
+                      {p.descripcion && <p style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>{p.descripcion}</p>}
+                      <button className="btn-primary" style={{ marginTop:8, marginBottom:0, fontSize:13, padding:"9px 0" }}
+                        onClick={() => { if(!usuario){login();return;} agregarCarrito(p,t); }}>
+                        Agregar al carrito
+                      </button>
                     </div>
-                  ))}
-                </div>
-              }
-            </div>
+                  </div>
+                ))}
+              </div>
+            }
           </>;
         })()}
 
         {/* ── BÚSQUEDA ── */}
         {pantalla === "busqueda" && <>
           <div className="back-row">
-            <button className="btn-back" onClick={() => { irAtras("inicio"); cargarProductos(); cargarTiendas(); setBusqueda(""); }}>←</button>
+            <button className="btn-back" onClick={() => { ir("inicio"); cargarProductos(); cargarTiendas(); setBusqueda(""); }}>←</button>
             <p className="sec-title" style={{ margin:0 }}>Resultados de búsqueda</p>
           </div>
           <div style={{ marginBottom:18 }}>
@@ -1774,7 +1338,7 @@ export default function App() {
         {/* ── CARRITO ── */}
         {pantalla === "carrito" && <>
           <div className="back-row">
-            <button className="btn-back" onClick={() => irAtras("inicio")}>←</button>
+            <button className="btn-back" onClick={() => ir("inicio")}>←</button>
             <p className="sec-title" style={{ margin:0 }}>Mi carrito 🛒</p>
           </div>
           {!usuario
@@ -1813,10 +1377,10 @@ export default function App() {
           }
         </>}
 
-        {/* ── MI PERFIL con avatar de persona ── */}
+        {/* ── MI PERFIL ── */}
         {pantalla === "miperfil" && <>
           <div className="back-row">
-            <button className="btn-back" onClick={() => irAtras("inicio")}>←</button>
+            <button className="btn-back" onClick={() => ir("inicio")}>←</button>
             <p className="sec-title" style={{ margin:0 }}>Mi perfil</p>
           </div>
           {!usuario
@@ -1825,7 +1389,9 @@ export default function App() {
             </div>
             : <div className="form-card">
               <div style={{ textAlign:"center", marginBottom:28 }}>
-                <PersonAvatar size={88} style={{ margin:"0 auto 14px" }} />
+                <div style={{ width:80, height:80, borderRadius:22, background:"var(--grad)", display:"flex", alignItems:"center", justifyContent:"center", color:"white", fontWeight:900, fontSize:32, margin:"0 auto 14px", boxShadow:"0 6px 20px rgba(192,57,43,0.3)", fontFamily:"var(--font-head)" }}>
+                  {(perfilDB?.nombre || usuario.user_metadata?.full_name || "U")[0].toUpperCase()}
+                </div>
                 <p style={{ fontFamily:"var(--font-head)", fontWeight:800, fontSize:19, marginBottom:4 }}>{perfilDB ? `${perfilDB.nombre} ${perfilDB.apellidos || ''}`.trim() : usuario.user_metadata?.full_name}</p>
                 <p style={{ fontSize:13, color:"var(--muted)", marginBottom:18 }}>{usuario.email}</p>
                 <div className="id-badge">{perfilDB?.usuario_id || "--------"}</div>
@@ -1839,7 +1405,7 @@ export default function App() {
         {/* ── MI TIENDA ── */}
         {pantalla === "mitienda" && <>
           <div className="back-row">
-            <button className="btn-back" onClick={() => { irAtras("inicio"); }}>←</button>
+            <button className="btn-back" onClick={() => { playSound("click"); ir("inicio"); }}>←</button>
             <p className="sec-title" style={{ margin:0 }}>Mi tienda</p>
           </div>
 
@@ -1854,31 +1420,16 @@ export default function App() {
               ? <div className="form-card">
                   <p className="form-title">Crea tu tienda 🏪</p>
                   <p className="form-sub">300 días activa · 5 productos gratis · S/ 1 por producto extra</p>
-
-                  {/* Foto OBLIGATORIA de tienda */}
-                  <p style={{ fontWeight:800, fontSize:13, marginBottom:4, color:"var(--cafe)" }}>
-                    📷 Foto o logo de tu tienda <span style={{ color:"var(--rojo)" }}>*</span>
-                  </p>
-                  <p style={{ fontSize:12, color:"var(--muted)", marginBottom:8 }}>Obligatorio</p>
-                  <div className="upload-area"
-                    style={{ borderColor: !tiendaFoto ? "#D0C8BC" : "var(--verde)", background: tiendaFoto ? "#F0FFF6" : "var(--gris)" }}
-                    onClick={() => { playSound("click"); document.getElementById("fotoTienda").click(); }}>
+                  <div className="upload-area" onClick={() => { playSound("click"); document.getElementById("fotoTienda").click(); }}>
                     {tiendaFotoPreview
-                      ? <div>
-                          <img src={tiendaFotoPreview} alt="preview" style={{ maxHeight:120, borderRadius:10, maxWidth:"100%" }} />
-                          <p style={{ fontSize:12, color:"var(--verde)", fontWeight:700, marginTop:6 }}>✅ Foto lista. Toca para cambiar.</p>
-                        </div>
-                      : <div>
-                          <p style={{ fontSize:28, marginBottom:6 }}>📷</p>
-                          <p style={{ color:"var(--rojo)", margin:0, fontSize:14, fontWeight:800 }}>Toca para subir foto (obligatorio)</p>
-                        </div>
+                      ? <img src={tiendaFotoPreview} alt="preview" style={{ maxHeight:120, borderRadius:10, maxWidth:"100%" }} />
+                      : <p style={{ color:"var(--muted)", margin:0, fontSize:14 }}>📷 Foto o logo de tu tienda</p>
                     }
                     <input id="fotoTienda" type="file" accept="image/*" style={{ display:"none" }} onChange={e => {
                       const f = e.target.files[0];
                       if (f) { setTiendaFoto(f); setTiendaFotoPreview(URL.createObjectURL(f)); }
                     }} />
                   </div>
-
                   <input className="inp" placeholder="Nombre de la tienda o marca *" value={tiendaForm.nombre} onChange={e => setTiendaForm({...tiendaForm, nombre:e.target.value})} />
                   <input className="inp" placeholder="WhatsApp (solo números, sin +51) *" value={tiendaForm.whatsapp} onChange={e => setTiendaForm({...tiendaForm, whatsapp:e.target.value})} />
                   <select className="inp" value={tiendaForm.departamento} onChange={e => setTiendaForm({...tiendaForm, departamento:e.target.value, provincia:"", distrito:""})}>
@@ -1896,12 +1447,8 @@ export default function App() {
                   <input className="inp" placeholder="Dirección exacta (opcional)" value={tiendaForm.direccion} onChange={e => setTiendaForm({...tiendaForm, direccion:e.target.value})} />
                   <textarea className="inp" style={{ height:80 }} placeholder="Descripción de tu tienda (opcional)" value={tiendaForm.descripcion} onChange={e => setTiendaForm({...tiendaForm, descripcion:e.target.value})} />
                   {msg && <p className={msg.includes("!")?"msg-ok":"msg-err"}>{msg}</p>}
-                  <button className="btn-primary" onClick={() => { playSound("click"); crearTienda(); }}
-                    disabled={guardando || !tiendaFoto}
-                    style={{ opacity: !tiendaFoto ? 0.5 : 1 }}>
-                    {guardando ? "Creando..." : !tiendaFoto ? "📷 Agrega una foto primero" : "Crear tienda"}
-                  </button>
-                  <button className="btn-secondary" onClick={() => { irAtras("inicio"); }}>Cancelar</button>
+                  <button className="btn-primary" onClick={() => { playSound("click"); crearTienda(); }} disabled={guardando}>{guardando?"Creando...":"Crear tienda"}</button>
+                  <button className="btn-secondary" onClick={() => { playSound("click"); ir("inicio"); }}>Cancelar</button>
                 </div>
 
               : (() => {
@@ -1912,138 +1459,82 @@ export default function App() {
                   const tokensComprados = miTienda.tokens_extra || 0;
                   const tokensTotal = tokensLibres + tokensComprados;
                   const tokensPct = Math.min(100, Math.round((tokensUsados / Math.max(tokensTotal, 1)) * 100));
-                  const { dias, estado: estadoDias, diasRestantes } = calcularDiasActivos(miTienda);
 
                   return <>
-                    {estadoDias === "gracia" && (
-                      <div className="alerta-dias">
-                        <span className="alerta-dias-icon">⚠️</span>
-                        <div className="alerta-dias-txt">Tu tienda venció hace {dias - 300} días. Tienes {diasRestantes} día{diasRestantes !== 1 ? "s" : ""} para renovar por S/ 5.</div>
-                      </div>
-                    )}
-                    {estadoDias === "vencida" && (
-                      <div className="alerta-dias" style={{ background:"linear-gradient(135deg,#FFE0DC,#FFCCC7)", borderColor:"#FF4D4D" }}>
-                        <span className="alerta-dias-icon">🚨</span>
-                        <div className="alerta-dias-txt" style={{ color:"#8B0000" }}>Tu tienda está vencida. Reactívala por S/ 10 para seguir vendiendo.</div>
-                      </div>
-                    )}
-
-                    {/* ── DASHBOARD LAYOUT (imagen referencia) ── */}
-                    <div className="tienda-dash">
-
-                      {/* ── COLUMNA IZQUIERDA ── */}
-                      <div className="tienda-dash-left">
-
-                        <div className="tienda-dash-avatar-card">
-                          {miTienda.foto_url
-                            ? <img src={miTienda.foto_url} alt={miTienda.nombre} className="tienda-dash-avatar" />
-                            : <div className="tienda-dash-avatar-letter">{miTienda.nombre[0]}</div>
-                          }
-                          <p className="tienda-dash-name">{miTienda.nombre}</p>
-                          <p className="tienda-dash-handle">@{miTienda.nombre.toLowerCase().replace(/\s+/g,"")}</p>
-                          <p className="tienda-dash-loc">📍 {miTienda.distrito}, {miTienda.provincia}, {miTienda.departamento}</p>
-                          <p className="tienda-dash-wa">🇵🇪 +51 {miTienda.whatsapp}</p>
-                        </div>
-
-                        <div className="tienda-dash-stats">
-                          <p style={{ fontFamily:"var(--font-head)", fontWeight:800, fontSize:12, color:"var(--cafe)", textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:4 }}>Estadísticas</p>
-                          <div className="tienda-dash-stat">
-                            <span className="tienda-dash-stat-lbl">Productos</span>
-                            <span className="tienda-dash-stat-val">{prodsTienda.length}</span>
-                          </div>
-                          <div className="tienda-dash-stat">
-                            <span className="tienda-dash-stat-lbl">❤️ Likes</span>
-                            <span className="tienda-dash-stat-val">{totalLikes}</span>
-                          </div>
-                          <div className="tienda-dash-stat">
-                            <span className="tienda-dash-stat-lbl">Días activa</span>
-                            <span className="tienda-dash-stat-val" style={{
-                              color: estadoDias === "vencida" ? "#CC0000" : estadoDias === "gracia" ? "#D4700A" : "var(--rojo)"
-                            }}>{dias}</span>
-                          </div>
-                        </div>
-
-                        <div className="tienda-dash-salud">
-                          <p className="tienda-dash-salud-title">🏆 Salud de la tienda</p>
-                          <div style={{ marginBottom:14 }}>
-                            <p style={{ fontSize:12, fontWeight:700, color:"var(--cafe)", marginBottom:4 }}>⏳ Tiempo de vida de la tienda</p>
-                            <div className="tokens-track">
-                              <div className="tokens-fill" style={{
-                                width: Math.min(100, (dias / 300) * 100) + "%",
-                                background: estadoDias === "vencida" ? "linear-gradient(90deg,#CC0000,#FF4444)" :
-                                            estadoDias === "gracia" ? "linear-gradient(90deg,#D4700A,#F5C842)" : "var(--grad)"
-                              }} />
-                            </div>
-                            <p style={{ fontSize:11, color:"var(--muted)", marginTop:3 }}>
-                              {estadoDias === "activa" ? `Día ${dias} de 300 · Te quedan ${diasRestantes} días` :
-                               estadoDias === "gracia" ? `Venció hace ${dias-300} días · ${diasRestantes} días para renovar` :
-                               "Tienda vencida"}
-                            </p>
-                            {(estadoDias === "gracia" || estadoDias === "vencida") && (
-                              <button className="btn-comprar-tokens" style={{ marginTop:8, width:"100%" }}
-                                onClick={() => { playSound("click"); pagarTienda(estadoDias === "gracia" ? 5 : 10, "Renovar tienda - TinkaMarket"); }}>
-                                Renovar S/ {estadoDias === "gracia" ? 5 : 10}
-                              </button>
-                            )}
-                          </div>
-                          <div>
-                            <p style={{ fontSize:12, fontWeight:700, color:"var(--cafe)", marginBottom:4 }}>📦 Publicaciones usadas</p>
-                            <div className="tokens-track">
-                              <div className="tokens-fill" style={{ width: tokensPct + "%" }} />
-                            </div>
-                            <p style={{ fontSize:11, color:"var(--muted)", marginTop:3 }}>
-                              {tokensUsados} de {tokensTotal} ({tokensPct}%)
-                            </p>
-                            {tokensUsados >= tokensTotal && (
-                              <button className="btn-comprar-tokens" style={{ marginTop:8, width:"100%" }}
-                                onClick={() => { playSound("click"); pagarTienda(1, "Publicación extra - TinkaMarket"); }}>
-                                + Comprar publicación
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* ── COLUMNA DERECHA: productos grid ── */}
-                      <div className="tienda-dash-right">
-                        <p className="tienda-dash-prods-title">Tus productos ({prodsTienda.length})</p>
-                        {prodsTienda.length === 0
-                          ? <div className="empty" style={{ marginBottom:0 }}>
-                              <div className="empty-icon">📦</div>
-                              <p className="empty-txt">Aún no tienes productos publicados</p>
-                            </div>
-                          : <div className="tienda-dash-prods-grid">
-                              {prodsTienda.map(p => {
-                                const { diaActual, estado: estProd, diasRestantes: drProd } = calcularDiasProducto(p);
-                                return (
-                                  <div key={p.id} className="tienda-dash-prod-card">
-                                    {p.fotos && p.fotos.length > 0 && p.fotos[0]
-                                      ? <img src={p.fotos[0]} alt={p.nombre} className="tienda-dash-prod-img"
-                                          onError={e => { e.target.onerror = null; e.target.style.display = "none"; }} />
-                                      : <div className="tienda-dash-prod-img-placeholder">📦</div>
-                                    }
-                                    <div className="tienda-dash-prod-body">
-                                      <p className="tienda-dash-prod-name">{p.nombre}</p>
-                                      <p className="tienda-dash-prod-meta">❤️ {p.likes || 0} likes · {p.cantidad} disponibles</p>
-                                      <p className="tienda-dash-prod-meta" style={{ fontSize: 10, marginTop: -2 }}>
-                                        {estProd === "activo" && `Día ${diaActual} de 30`}
-                                        {estProd === "gracia" && `Vencido · gracia ${drProd}d`}
-                                        {estProd === "vencido" && "Vencido"}
-                                      </p>
-                                      <div className="tienda-dash-prod-price-row">
-                                        <span className="tienda-dash-prod-price">S/ {p.precio}</span>
-                                        <span className={`prod-dias-badge ${estProd === "activo" ? "prod-dias-activo" : estProd === "gracia" ? "prod-dias-gracia" : "prod-dias-vencido"}`}>
-                                          {estProd === "activo" ? `${drProd}d` : estProd === "gracia" ? `⚠️ ${drProd}d` : "Vencido"}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                    {/* ── INFO DE TIENDA ── */}
+                    <div className="tienda-info-card" style={{ marginBottom:20 }}>
+                      <div className="tienda-info-head" style={{ marginBottom:18 }}>
+                        {miTienda.foto_url
+                          ? <img src={miTienda.foto_url} alt={miTienda.nombre} className="tienda-big-avatar" />
+                          : <div className="tienda-big-letter">{miTienda.nombre[0]}</div>
                         }
+                        <div>
+                          <p style={{ fontFamily:"var(--font-head)", fontWeight:800, fontSize:18, marginBottom:4 }}>{miTienda.nombre}</p>
+                          <p style={{ fontSize:13, color:"var(--muted)", marginBottom:2 }}>📍 {miTienda.distrito}, {miTienda.provincia}, {miTienda.departamento}</p>
+                          <p style={{ fontSize:13, color:"var(--muted)", marginBottom:miTienda.descripcion?6:0 }}>📲 +51 {miTienda.whatsapp}</p>
+                          {miTienda.descripcion && <p style={{ fontSize:13, color:"#555" }}>{miTienda.descripcion}</p>}
+                        </div>
+                      </div>
+
+                      {/* ── STATS ── */}
+                      <div className="stats-grid">
+                        <div className="stat-card">
+                          <p className="stat-val">{prodsTienda.length}</p>
+                          <p className="stat-lbl">Productos</p>
+                        </div>
+                        <div className="stat-card">
+                          <p className="stat-val">{totalLikes}</p>
+                          <p className="stat-lbl">❤️ Likes</p>
+                        </div>
+                        <div className="stat-card">
+                          <p className="stat-val">{tokensComprados > 0 ? `+${tokensComprados}` : "300"}</p>
+                          <p className="stat-lbl">{tokensComprados > 0 ? "Extras" : "Días"}</p>
+                        </div>
+                      </div>
+
+                      {/* ── TOKENS ── */}
+                      <div className="tokens-bar">
+                        <div className="tokens-left">
+                          <p className="tokens-title">Publicaciones usadas</p>
+                          <div className="tokens-track">
+                            <div className="tokens-fill" style={{ width: tokensPct + "%" }} />
+                          </div>
+                          <p className="tokens-sub">
+                            {tokensUsados} de {tokensTotal} ({tokensPct}%)
+                            {tokensComprados > 0 && <> · {tokensComprados} extra{tokensComprados>1?"s":""} comprado{tokensComprados>1?"s":""}</>}
+                          </p>
+                        </div>
+                        {tokensUsados >= tokensTotal && (
+                          <button className="btn-comprar-tokens" onClick={() => { playSound("click"); pagarTienda(1, "Publicación extra - TinkaMarket"); }}>
+                            + Comprar
+                          </button>
+                        )}
                       </div>
                     </div>
+
+                    {/* ── PRODUCTOS PUBLICADOS ── */}
+                    {prodsTienda.length > 0 && (
+                      <div className="tienda-info-card" style={{ marginBottom:20 }}>
+                        <p style={{ fontFamily:"var(--font-head)", fontWeight:800, fontSize:15, marginBottom:12, color:"var(--cafe)" }}>
+                          📦 Tus productos ({prodsTienda.length})
+                        </p>
+                        {prodsTienda.map(p => (
+                          <div key={p.id} className="prod-item">
+                            <div className="prod-item-img">
+                              {p.fotos && p.fotos[0]
+                                ? <img src={p.fotos[0]} alt={p.nombre} />
+                                : "✨"
+                              }
+                            </div>
+                            <div className="prod-item-info">
+                              <p className="prod-item-name">{p.nombre}</p>
+                              <p className="prod-item-meta">❤️ {p.likes || 0} likes · {p.cantidad} disponibles</p>
+                            </div>
+                            <p className="prod-item-price">S/ {p.precio}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     {/* ── BOTÓN TOGGLE PUBLICAR ── */}
                     <button
@@ -2061,45 +1552,30 @@ export default function App() {
                     {/* ── FORMULARIO COLAPSABLE ── */}
                     <div className={`form-slide ${mostrarFormProd ? "visible" : ""}`}>
                       <div className="form-card" style={{ margin:"0 0 24px" }}>
-                        <p style={{ fontWeight:800, fontSize:13, marginBottom:4, color:"var(--cafe)" }}>📷 Foto del producto <span style={{ color:"var(--rojo)" }}>*</span></p>
-                        <p style={{ fontSize:12, color:"var(--muted)", marginBottom:8 }}>Obligatorio · mínimo 1, máximo 4 fotos</p>
-                        <div className="upload-area"
-                          style={{ borderColor: prodFotos.length === 0 ? "#D0C8BC" : "var(--verde)", background: prodFotos.length > 0 ? "#F0FFF6" : "var(--gris)" }}
-                          onClick={() => { playSound("click"); document.getElementById("fotosProducto").click(); }}>
+                        <p style={{ fontWeight:700, fontSize:13, marginBottom:8, color:"var(--muted)" }}>📷 Fotos del producto (máximo 4)</p>
+                        <div className="upload-area" onClick={() => { playSound("click"); document.getElementById("fotosProducto").click(); }}>
                           {prodFotosPrev.length > 0
                             ? <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center" }}>
-                                {prodFotosPrev.map((prev,i) => (
-                                  <img key={i} src={prev} style={{ height:80, borderRadius:8, objectFit:"cover" }} alt={`preview-${i}`} />
-                                ))}
-                                <p style={{ width:"100%", textAlign:"center", fontSize:12, color:"var(--verde)", fontWeight:700, marginTop:4 }}>
-                                  ✅ {prodFotosPrev.length} foto{prodFotosPrev.length > 1 ? "s" : ""} lista{prodFotosPrev.length > 1 ? "s" : ""}. Toca para cambiar.
-                                </p>
+                                {prodFotosPrev.map((p,i) => <img key={i} src={p} style={{ height:80, borderRadius:8, objectFit:"cover" }} />)}
                               </div>
-                            : <div>
-                                <p style={{ fontSize:28, marginBottom:6 }}>📷</p>
-                                <p style={{ color:"var(--rojo)", margin:0, fontSize:14, fontWeight:800 }}>Toca para subir fotos (obligatorio)</p>
-                                <p style={{ color:"var(--muted)", margin:"4px 0 0", fontSize:12 }}>Sin foto no se puede publicar</p>
-                              </div>
+                            : <p style={{ color:"var(--muted)", margin:0, fontSize:14 }}>📷 Toca para agregar fotos (máx. 4)</p>
                           }
                           <input id="fotosProducto" type="file" accept="image/*" multiple style={{ display:"none" }} onChange={e => {
                             const files = Array.from(e.target.files).slice(0,4);
-                            if (files.length > 0) { setProdFotos(files); setProdFotosPrev(files.map(f => URL.createObjectURL(f))); }
+                            setProdFotos(files);
+                            setProdFotosPrev(files.map(f => URL.createObjectURL(f)));
                           }} />
                         </div>
                         <input className="inp" placeholder="Nombre del producto *" value={prodForm.nombre} onChange={e => setProdForm({...prodForm, nombre:e.target.value.toUpperCase()})} />
-                        <input className="inp" placeholder="Precio en soles *" type="number" min="0" step="0.5" value={prodForm.precio} onChange={e => setProdForm({...prodForm, precio:e.target.value})} />
-                        <input className="inp" placeholder="Cantidad disponible *" type="number" min="1" value={prodForm.cantidad} onChange={e => setProdForm({...prodForm, cantidad:e.target.value})} />
+                        <input className="inp" placeholder="Precio en soles *" type="number" value={prodForm.precio} onChange={e => setProdForm({...prodForm, precio:e.target.value})} />
+                        <input className="inp" placeholder="Cantidad disponible *" type="number" value={prodForm.cantidad} onChange={e => setProdForm({...prodForm, cantidad:e.target.value})} />
                         <select className="inp" value={prodForm.categoria} onChange={e => setProdForm({...prodForm, categoria:e.target.value})}>
                           {CATS.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                         <textarea className="inp" style={{ height:70 }} placeholder="Descripción del producto (opcional)" value={prodForm.descripcion} onChange={e => setProdForm({...prodForm, descripcion:e.target.value})} />
-                        <div style={{ background:"#FFF8F0", border:"1px solid #F5C842", borderRadius:10, padding:"10px 14px", marginBottom:12, fontSize:12, color:"#7A5A00" }}>
-                          ⏰ Esta publicación durará <strong>30 días</strong> (Día 1 al Día 30). Al vencer tendrás 2 días para renovarla.
-                        </div>
                         {msg && <p className={msg.includes("!")?"msg-ok":"msg-err"}>{msg}</p>}
-                        <button className="btn-primary" onClick={() => { playSound("click"); publicarProducto(); }} disabled={guardando || prodFotos.length === 0}
-                          style={{ opacity: prodFotos.length === 0 ? 0.5 : 1 }}>
-                          {guardando ? "Publicando..." : prodFotos.length === 0 ? "📷 Agrega una foto primero" : "Publicar producto"}
+                        <button className="btn-primary" onClick={() => { playSound("click"); publicarProducto(); }} disabled={guardando}>
+                          {guardando ? "Publicando..." : "Publicar producto"}
                         </button>
                         <button className="btn-secondary" onClick={() => { playSound("close"); setMostrarFormProd(false); }}>
                           Cancelar
@@ -2114,7 +1590,7 @@ export default function App() {
         {/* ── SOPORTE ── */}
         {pantalla === "soporte" && <>
           <div className="back-row">
-            <button className="btn-back" onClick={() => irAtras("inicio")}>←</button>
+            <button className="btn-back" onClick={() => ir("inicio")}>←</button>
             <p className="sec-title" style={{ margin:0 }}>Soporte</p>
           </div>
           <div className="form-card">
@@ -2140,7 +1616,7 @@ export default function App() {
         {/* ── POLÍTICAS ── */}
         {pantalla === "politicas" && <>
           <div className="back-row">
-            <button className="btn-back" onClick={() => irAtras("inicio")}>←</button>
+            <button className="btn-back" onClick={() => ir("inicio")}>←</button>
             <p className="sec-title" style={{ margin:0 }}>Políticas de uso</p>
           </div>
           <div style={{ maxWidth:700, margin:"0 auto" }}>
@@ -2165,7 +1641,7 @@ export default function App() {
         {/* ── CÓMO VENDER ── */}
         {pantalla === "comovender" && <>
           <div className="back-row">
-            <button className="btn-back" onClick={() => irAtras("inicio")}>←</button>
+            <button className="btn-back" onClick={() => ir("inicio")}>←</button>
             <p className="sec-title" style={{ margin:0 }}>Cómo vender en TinkaMarket</p>
           </div>
           <div className="form-card" style={{ maxWidth:700 }}>
@@ -2245,4 +1721,4 @@ export default function App() {
       )}
     </div>
   );
-}
+}S
