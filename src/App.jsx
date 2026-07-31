@@ -1279,6 +1279,14 @@ export default function App() {
                         {misLikes.includes(p.id) ? "❤️ Likeado" : "Me gusta"}
                       </button>
                     </div>
+                    <button className="btn-primary" style={{ marginTop:8, marginBottom:0, fontSize:13, padding:"9px 0" }}
+                      onClick={() => {
+                        if (!usuario) { login(); return; }
+                        const t = tiendas.find(x => x.id === p.tienda_id);
+                        if (t) agregarCarrito(p, t);
+                      }}>
+                      Agregar al carrito
+                    </button>
                   </div>
                 </div>
               ))}
@@ -1331,6 +1339,14 @@ export default function App() {
                           {misLikes.includes(p.id) ? "❤️ Likeado" : "Me gusta"}
                         </button>
                       </div>
+                      <button className="btn-primary" style={{ marginTop:8, marginBottom:0, fontSize:13, padding:"9px 0" }}
+                        onClick={() => {
+                          if (!usuario) { login(); return; }
+                          const t = tiendas.find(x => x.id === p.tienda_id);
+                          if (t) agregarCarrito(p, t);
+                        }}>
+                        Agregar al carrito
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -1410,6 +1426,14 @@ export default function App() {
                     <div className="prod-body">
                       <p className="prod-name">{p.nombre}</p>
                       <p className="prod-price">S/ {p.precio}</p>
+                      <button className="btn-primary" style={{ marginTop:8, marginBottom:0, fontSize:13, padding:"9px 0" }}
+                        onClick={() => {
+                          if (!usuario) { login(); return; }
+                          const t = tiendas.find(x => x.id === p.tienda_id);
+                          if (t) agregarCarrito(p, t);
+                        }}>
+                        Agregar al carrito
+                      </button>
                     </div>
                   </div>
                 ))}
