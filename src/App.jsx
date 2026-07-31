@@ -647,6 +647,32 @@ const CSS = `
   }
   .prod-gallery-thumb.active { border-color: var(--rojo); }
 
+  /* ── BAN OVERLAY ── */
+  .ban-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(15,5,0,0.72); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .ban-box {
+    background: white; border-radius: 22px; max-width: 420px; width: 100%;
+    padding: 32px 28px; text-align: center;
+    box-shadow: 0 24px 70px rgba(0,0,0,0.4);
+    animation: popIn 0.22s ease;
+  }
+  .ban-icon {
+    width: 64px; height: 64px; border-radius: 18px;
+    background: linear-gradient(135deg,#7B0000,#EF4444);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px; margin: 0 auto 16px;
+    box-shadow: 0 6px 20px rgba(239,68,68,0.35);
+  }
+  .ban-title { font-family: var(--font-head); font-weight: 900; font-size: 20px; color: var(--rojo); margin-bottom: 10px; }
+  .ban-row {
+    background: var(--gris); border-radius: 12px; padding: 12px 14px;
+    text-align: left; margin-bottom: 10px; font-size: 13px;
+  }
+  .ban-row b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 3px; font-weight: 800; }
+
   @media (max-width: 600px) {
     .nav { padding: 0 12px; gap: 10px; }
     .nav-brand { display: none; }
@@ -815,6 +841,7 @@ export default function App() {
   const [pantalla, setPantalla] = useState("inicio");
   const [usuario, setUsuario] = useState(null);
   const [perfilDB, setPerfilDB] = useState(null);
+  const [baneado, setBaneado] = useState(null); // objeto usuario baneado (o null)
   const [menuOpen, setMenuOpen] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [filtroCat, setFiltroCat] = useState("Todos");
@@ -847,7 +874,7 @@ export default function App() {
     });
     supabase.auth.onAuthStateChange((_e, session) => {
       if (session?.user) iniciarSesion(session.user);
-      else { setUsuario(null); setPerfilDB(null); setMiTienda(null); setMostrarPerfil(false); }
+      else { setUsuario(null); setPerfilDB(null); setMiTienda(null); setMostrarPerfil(false); setBaneado(null); }
     });
     cargarProductos();
     cargarTiendas();
@@ -856,6 +883,17 @@ export default function App() {
   async function iniciarSesion(user) {
     setUsuario(user);
     const { data: perfil } = await supabase.from("usuarios").select("*").eq("email", user.email).single();
+
+    // Si el usuario está baneado, se bloquea el acceso al resto de la app
+    // hasta que se desbanee (o mientras el bloqueo esté vigente).
+    if (perfil?.baneado) {
+      setPerfilDB(perfil);
+      setBaneado(perfil);
+      setMostrarPerfil(false);
+      return;
+    }
+    setBaneado(null);
+
     if (!perfil || !perfil.perfil_completo) {
       setMostrarPerfil(true); setPerfilDB(perfil);
     } else {
@@ -888,15 +926,25 @@ export default function App() {
     setGuardando(false);
   }
 
+  // Trae solo productos cuya tienda esté "activa" o "revision".
+  // Así, si la tienda dueña está suspendida, sus productos dejan de
+  // aparecer en el catálogo general aunque el registro siga existiendo.
   async function cargarProductos(cat = null) {
-    let q = supabase.from("productos").select("*").order("likes", { ascending:false });
+    let q = supabase
+      .from("productos")
+      .select("*, tiendas!inner(estado)")
+      .in("tiendas.estado", ["activa", "revision"])
+      .order("likes", { ascending:false });
     if (cat && cat !== "Todos") q = q.eq("categoria", cat);
-    const { data } = await q;
+    const { data, error } = await q;
+    if (error) { console.error("Error cargando productos:", error); setProductos([]); return; }
     setProductos(data || []);
   }
 
+  // Incluye "revision" además de "activa" para que las tiendas en
+  // revisión también aparezcan (se distinguen con el badge 👁️ en su perfil).
   async function cargarTiendas() {
-    const { data } = await supabase.from("tiendas").select("*").eq("estado","activa");
+    const { data } = await supabase.from("tiendas").select("*").in("estado", ["activa", "revision"]);
     setTiendas(data || []);
   }
 
@@ -908,9 +956,14 @@ export default function App() {
   async function buscar() {
     if (!busqueda.trim()) return;
     const cat = filtroCat === "Todos" ? null : filtroCat;
-    let qP = supabase.from("productos").select("*").ilike("nombre", `%${busqueda}%`).order("likes", { ascending:false });
+    let qP = supabase
+      .from("productos")
+      .select("*, tiendas!inner(estado)")
+      .in("tiendas.estado", ["activa", "revision"])
+      .ilike("nombre", `%${busqueda}%`)
+      .order("likes", { ascending:false });
     if (cat) qP = qP.eq("categoria", cat);
-    const qT = supabase.from("tiendas").select("*").eq("estado","activa").ilike("nombre", `%${busqueda}%`);
+    const qT = supabase.from("tiendas").select("*").in("estado", ["activa","revision"]).ilike("nombre", `%${busqueda}%`);
     const [{ data:p }, { data:t }] = await Promise.all([qP, qT]);
     setProductos(p || []); setTiendas(t || []); setPantalla("busqueda");
   }
@@ -923,6 +976,7 @@ export default function App() {
     await supabase.auth.signOut();
     setUsuario(null); setPerfilDB(null); setMiTienda(null);
     setCarrito([]); setTiendaCarrito(null); setMostrarPerfil(false);
+    setBaneado(null);
     setPantalla("inicio"); setMenuOpen(false);
   }
 
@@ -955,6 +1009,13 @@ export default function App() {
   }
 
   async function publicarProducto() {
+    // Bloqueo defensivo: si la tienda está suspendida no debe poder publicar
+    // (además de que el formulario ya está oculto en la UI en modo solo-lectura).
+    if (miTienda?.estado === "suspendida") {
+      playSound("error");
+      setMsg("Tu tienda está suspendida. No puedes publicar productos mientras dure la suspensión.");
+      return;
+    }
     if (!prodForm.nombre || !prodForm.precio || !prodForm.cantidad) {
       playSound("error"); setMsg("Completa los campos obligatorios."); return;
     }
@@ -1066,6 +1127,39 @@ export default function App() {
 
   // ── Helper: primera foto de producto ──────────────────────────────
   const firstFoto = (p) => p.fotos && p.fotos.length > 0 ? p.fotos[0] : null;
+
+  const fechaBan = (d) => d
+    ? new Date(d).toLocaleDateString("es-PE", { day:"2-digit", month:"long", year:"numeric" })
+    : "—";
+
+  // ── OVERLAY DE CUENTA BANEADA ──────────────────────────────────────
+  if (baneado) return (
+    <div className="ban-overlay">
+      <style>{CSS}</style>
+      <div className="ban-box">
+        <div className="ban-icon">🚫</div>
+        <p className="ban-title">Cuenta suspendida</p>
+        <div className="ban-row">
+          <b>Motivo</b>
+          {baneado.motivo_baneo || "No especificado"}
+        </div>
+        <div className="ban-row">
+          <b>Duración</b>
+          {baneado.baneo_hasta ? `Suspendida hasta el ${fechaBan(baneado.baneo_hasta)}` : "Suspensión permanente"}
+        </div>
+        {baneado.multa_reactivacion ? (
+          <div className="ban-row">
+            <b>Monto a pagar para reactivar</b>
+            S/ {Number(baneado.multa_reactivacion).toFixed(2)}
+          </div>
+        ) : null}
+        <p style={{ fontSize:12, color:"var(--muted)", margin:"14px 0 18px", lineHeight:1.6 }}>
+          Si crees que esto es un error, contacta a soporte de TinkaMarket.
+        </p>
+        <button className="btn-secondary" style={{ marginBottom:0 }} onClick={logout}>Cerrar sesión</button>
+      </div>
+    </div>
+  );
 
   // ── MODAL PERFIL ─────────────────────────────────────────────────
   if (mostrarPerfil && usuario) return (
@@ -1202,7 +1296,7 @@ export default function App() {
                     : <div className="tienda-avatar-letter">{t.nombre[0]}</div>
                   }
                   <div>
-                    <p className="tienda-name">{t.nombre}</p>
+                    <p className="tienda-name">{t.nombre} {t.estado === "revision" && <span title="En revisión">👁️</span>}</p>
                     <p className="tienda-loc">📍 {t.distrito}, {t.provincia}</p>
                   </div>
                 </div>
@@ -1254,7 +1348,7 @@ export default function App() {
           return <>
             <div className="back-row">
               <button className="btn-back" onClick={() => ir("inicio")}>←</button>
-              <p className="sec-title" style={{ margin:0 }}>{t.nombre}</p>
+              <p className="sec-title" style={{ margin:0 }}>{t.nombre} {t.estado === "revision" && <span title="En revisión">👁️</span>}</p>
             </div>
             <div className="tienda-info-card">
               <div className="tienda-info-head">
@@ -1263,7 +1357,7 @@ export default function App() {
                   : <div className="tienda-big-letter">{t.nombre[0]}</div>
                 }
                 <div>
-                  <p style={{ fontFamily:"var(--font-head)", fontWeight:800, fontSize:18, marginBottom:5 }}>{t.nombre}</p>
+                  <p style={{ fontFamily:"var(--font-head)", fontWeight:800, fontSize:18, marginBottom:5 }}>{t.nombre} {t.estado === "revision" && <span title="En revisión">👁️</span>}</p>
                   <p style={{ fontSize:13, color:"var(--muted)", marginBottom:3 }}>📍 {t.distrito}, {t.provincia}, {t.departamento}</p>
                   {t.direccion_exacta && <p style={{ fontSize:13, color:"var(--muted)", marginBottom:3 }}>🏠 {t.direccion_exacta}</p>}
                   {t.descripcion && <p style={{ fontSize:13, color:"#555", marginTop:6 }}>{t.descripcion}</p>}
@@ -1327,7 +1421,7 @@ export default function App() {
                       ? <img src={t.foto_url} alt={t.nombre} className="tienda-avatar" />
                       : <div className="tienda-avatar-letter">{t.nombre[0]}</div>
                     }
-                    <div><p className="tienda-name">{t.nombre}</p><p className="tienda-loc">📍 {t.distrito}, {t.provincia}</p></div>
+                    <div><p className="tienda-name">{t.nombre} {t.estado === "revision" && <span title="En revisión">👁️</span>}</p><p className="tienda-loc">📍 {t.distrito}, {t.provincia}</p></div>
                   </div>
                 ))}
               </div>}
@@ -1459,8 +1553,21 @@ export default function App() {
                   const tokensComprados = miTienda.tokens_extra || 0;
                   const tokensTotal = tokensLibres + tokensComprados;
                   const tokensPct = Math.min(100, Math.round((tokensUsados / Math.max(tokensTotal, 1)) * 100));
+                  const suspendida = miTienda.estado === "suspendida";
 
                   return <>
+                    {/* ── AVISO DE SUSPENSIÓN (modo solo-lectura) ── */}
+                    {suspendida && (
+                      <div className="empty" style={{ textAlign:"left", background:"#FFF0EE", border:"1.5px solid #F5C0B8" }}>
+                        <p style={{ fontWeight:800, color:"var(--rojo)", fontSize:15, marginBottom:6 }}>🚫 Tu tienda está suspendida</p>
+                        <p style={{ fontSize:13, color:"#7A4438", lineHeight:1.6, margin:0 }}>
+                          Mientras dure la suspensión no aparece en el catálogo ni puedes publicar productos nuevos.
+                          Puedes revisar tu información y tus productos existentes en modo solo lectura.
+                          Si crees que es un error, contáctanos desde Soporte.
+                        </p>
+                      </div>
+                    )}
+
                     {/* ── INFO DE TIENDA ── */}
                     <div className="tienda-info-card" style={{ marginBottom:20 }}>
                       <div className="tienda-info-head" style={{ marginBottom:18 }}>
@@ -1493,23 +1600,25 @@ export default function App() {
                       </div>
 
                       {/* ── TOKENS ── */}
-                      <div className="tokens-bar">
-                        <div className="tokens-left">
-                          <p className="tokens-title">Publicaciones usadas</p>
-                          <div className="tokens-track">
-                            <div className="tokens-fill" style={{ width: tokensPct + "%" }} />
+                      {!suspendida && (
+                        <div className="tokens-bar">
+                          <div className="tokens-left">
+                            <p className="tokens-title">Publicaciones usadas</p>
+                            <div className="tokens-track">
+                              <div className="tokens-fill" style={{ width: tokensPct + "%" }} />
+                            </div>
+                            <p className="tokens-sub">
+                              {tokensUsados} de {tokensTotal} ({tokensPct}%)
+                              {tokensComprados > 0 && <> · {tokensComprados} extra{tokensComprados>1?"s":""} comprado{tokensComprados>1?"s":""}</>}
+                            </p>
                           </div>
-                          <p className="tokens-sub">
-                            {tokensUsados} de {tokensTotal} ({tokensPct}%)
-                            {tokensComprados > 0 && <> · {tokensComprados} extra{tokensComprados>1?"s":""} comprado{tokensComprados>1?"s":""}</>}
-                          </p>
+                          {tokensUsados >= tokensTotal && (
+                            <button className="btn-comprar-tokens" onClick={() => { playSound("click"); pagarTienda(1, "Publicación extra - TinkaMarket"); }}>
+                              + Comprar
+                            </button>
+                          )}
                         </div>
-                        {tokensUsados >= tokensTotal && (
-                          <button className="btn-comprar-tokens" onClick={() => { playSound("click"); pagarTienda(1, "Publicación extra - TinkaMarket"); }}>
-                            + Comprar
-                          </button>
-                        )}
-                      </div>
+                      )}
                     </div>
 
                     {/* ── PRODUCTOS PUBLICADOS ── */}
@@ -1536,52 +1645,54 @@ export default function App() {
                       </div>
                     )}
 
-                    {/* ── BOTÓN TOGGLE PUBLICAR ── */}
-                    <button
-                      className="btn-toggle-form"
-                      onClick={() => {
-                        const next = !mostrarFormProd;
-                        playSound(next ? "open" : "close");
-                        setMostrarFormProd(next);
-                      }}
-                    >
-                      <span>{mostrarFormProd ? "Cerrar formulario" : "➕  Publicar nuevo producto"}</span>
-                      <span className={`btn-toggle-arrow ${mostrarFormProd ? "open" : ""}`}>▾</span>
-                    </button>
+                    {/* ── BOTÓN TOGGLE PUBLICAR (bloqueado si suspendida) ── */}
+                    {!suspendida && <>
+                      <button
+                        className="btn-toggle-form"
+                        onClick={() => {
+                          const next = !mostrarFormProd;
+                          playSound(next ? "open" : "close");
+                          setMostrarFormProd(next);
+                        }}
+                      >
+                        <span>{mostrarFormProd ? "Cerrar formulario" : "➕  Publicar nuevo producto"}</span>
+                        <span className={`btn-toggle-arrow ${mostrarFormProd ? "open" : ""}`}>▾</span>
+                      </button>
 
-                    {/* ── FORMULARIO COLAPSABLE ── */}
-                    <div className={`form-slide ${mostrarFormProd ? "visible" : ""}`}>
-                      <div className="form-card" style={{ margin:"0 0 24px" }}>
-                        <p style={{ fontWeight:700, fontSize:13, marginBottom:8, color:"var(--muted)" }}>📷 Fotos del producto (máximo 4)</p>
-                        <div className="upload-area" onClick={() => { playSound("click"); document.getElementById("fotosProducto").click(); }}>
-                          {prodFotosPrev.length > 0
-                            ? <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center" }}>
-                                {prodFotosPrev.map((p,i) => <img key={i} src={p} style={{ height:80, borderRadius:8, objectFit:"cover" }} />)}
-                              </div>
-                            : <p style={{ color:"var(--muted)", margin:0, fontSize:14 }}>📷 Toca para agregar fotos (máx. 4)</p>
-                          }
-                          <input id="fotosProducto" type="file" accept="image/*" multiple style={{ display:"none" }} onChange={e => {
-                            const files = Array.from(e.target.files).slice(0,4);
-                            setProdFotos(files);
-                            setProdFotosPrev(files.map(f => URL.createObjectURL(f)));
-                          }} />
+                      {/* ── FORMULARIO COLAPSABLE ── */}
+                      <div className={`form-slide ${mostrarFormProd ? "visible" : ""}`}>
+                        <div className="form-card" style={{ margin:"0 0 24px" }}>
+                          <p style={{ fontWeight:700, fontSize:13, marginBottom:8, color:"var(--muted)" }}>📷 Fotos del producto (máximo 4)</p>
+                          <div className="upload-area" onClick={() => { playSound("click"); document.getElementById("fotosProducto").click(); }}>
+                            {prodFotosPrev.length > 0
+                              ? <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center" }}>
+                                  {prodFotosPrev.map((p,i) => <img key={i} src={p} style={{ height:80, borderRadius:8, objectFit:"cover" }} />)}
+                                </div>
+                              : <p style={{ color:"var(--muted)", margin:0, fontSize:14 }}>📷 Toca para agregar fotos (máx. 4)</p>
+                            }
+                            <input id="fotosProducto" type="file" accept="image/*" multiple style={{ display:"none" }} onChange={e => {
+                              const files = Array.from(e.target.files).slice(0,4);
+                              setProdFotos(files);
+                              setProdFotosPrev(files.map(f => URL.createObjectURL(f)));
+                            }} />
+                          </div>
+                          <input className="inp" placeholder="Nombre del producto *" value={prodForm.nombre} onChange={e => setProdForm({...prodForm, nombre:e.target.value.toUpperCase()})} />
+                          <input className="inp" placeholder="Precio en soles *" type="number" value={prodForm.precio} onChange={e => setProdForm({...prodForm, precio:e.target.value})} />
+                          <input className="inp" placeholder="Cantidad disponible *" type="number" value={prodForm.cantidad} onChange={e => setProdForm({...prodForm, cantidad:e.target.value})} />
+                          <select className="inp" value={prodForm.categoria} onChange={e => setProdForm({...prodForm, categoria:e.target.value})}>
+                            {CATS.map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                          <textarea className="inp" style={{ height:70 }} placeholder="Descripción del producto (opcional)" value={prodForm.descripcion} onChange={e => setProdForm({...prodForm, descripcion:e.target.value})} />
+                          {msg && <p className={msg.includes("!")?"msg-ok":"msg-err"}>{msg}</p>}
+                          <button className="btn-primary" onClick={() => { playSound("click"); publicarProducto(); }} disabled={guardando}>
+                            {guardando ? "Publicando..." : "Publicar producto"}
+                          </button>
+                          <button className="btn-secondary" onClick={() => { playSound("close"); setMostrarFormProd(false); }}>
+                            Cancelar
+                          </button>
                         </div>
-                        <input className="inp" placeholder="Nombre del producto *" value={prodForm.nombre} onChange={e => setProdForm({...prodForm, nombre:e.target.value.toUpperCase()})} />
-                        <input className="inp" placeholder="Precio en soles *" type="number" value={prodForm.precio} onChange={e => setProdForm({...prodForm, precio:e.target.value})} />
-                        <input className="inp" placeholder="Cantidad disponible *" type="number" value={prodForm.cantidad} onChange={e => setProdForm({...prodForm, cantidad:e.target.value})} />
-                        <select className="inp" value={prodForm.categoria} onChange={e => setProdForm({...prodForm, categoria:e.target.value})}>
-                          {CATS.map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
-                        <textarea className="inp" style={{ height:70 }} placeholder="Descripción del producto (opcional)" value={prodForm.descripcion} onChange={e => setProdForm({...prodForm, descripcion:e.target.value})} />
-                        {msg && <p className={msg.includes("!")?"msg-ok":"msg-err"}>{msg}</p>}
-                        <button className="btn-primary" onClick={() => { playSound("click"); publicarProducto(); }} disabled={guardando}>
-                          {guardando ? "Publicando..." : "Publicar producto"}
-                        </button>
-                        <button className="btn-secondary" onClick={() => { playSound("close"); setMostrarFormProd(false); }}>
-                          Cancelar
-                        </button>
                       </div>
-                    </div>
+                    </>}
                   </>;
                 })()
           }
@@ -1721,4 +1832,4 @@ export default function App() {
       )}
     </div>
   );
-}S
+}

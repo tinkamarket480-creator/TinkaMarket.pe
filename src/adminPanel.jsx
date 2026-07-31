@@ -232,10 +232,12 @@ const CSS = `
     position: relative; background: var(--bg2); border: 1px solid var(--border);
     border-radius: 18px; padding: 28px; max-width: 440px; width: 100%;
     box-shadow: 0 20px 60px rgba(0,0,0,0.6); animation: popIn 0.22s ease;
+    max-height: 88vh; overflow-y: auto;
   }
   @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   .modal-title { font-family: var(--font-h); font-size: 17px; font-weight: 800; margin-bottom: 6px; }
   .modal-sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; line-height: 1.6; }
+  .modal-field-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
   .inp-dark {
     display: block; width: 100%; padding: 11px 14px; margin-bottom: 12px;
     background: var(--bg3); border: 1px solid var(--border); border-radius: 9px;
@@ -244,6 +246,7 @@ const CSS = `
   }
   .inp-dark:focus { border-color: var(--accent); }
   .inp-dark::placeholder { color: var(--muted); }
+  .inp-dark[type="date"] { color-scheme: dark; }
   .modal-actions { display: flex; gap: 10px; margin-top: 6px; }
   .modal-actions .btn-primary-dark { flex: 1; padding: 11px; }
   .btn-cancel {
@@ -455,13 +458,21 @@ export default function AdminPanel() {
   }
 
   // ── ACCIONES USUARIOS ────────────────────────────────────────────
-  async function banearUsuario(u, multa) {
+  // form: { multa, motivo, hasta } — hasta es un string "YYYY-MM-DD" del <input type="date">,
+  // vacío significa baneo permanente (sin fecha límite).
+  async function banearUsuario(u, form) {
+    const multa  = form?.multa  || "";
+    const motivo = form?.motivo || "";
+    const hasta  = form?.hasta  || "";
+
     // FIX 3: buscar tiendas por el auth_id del usuario (campo usuario_id en tiendas
     // corresponde al UUID de auth, no al id de la tabla usuarios).
     // Primero actualizamos el registro del usuario.
     const { error: errU } = await supabase.from("usuarios").update({
       baneado: true,
       multa_reactivacion: multa ? parseFloat(multa) : null,
+      motivo_baneo: motivo || null,
+      baneo_hasta: hasta ? new Date(hasta).toISOString() : null,
     }).eq("id", u.id);
     if (errU) { showMsg("Error al banear: " + errU.message, "err"); return; }
 
@@ -481,7 +492,7 @@ export default function AdminPanel() {
       await supabase.from("tiendas").update({ estado: "suspendida" }).in("id", ids);
     }
 
-    showMsg(`Usuario ${u.nombre} baneado${multa ? ` (multa S/ ${multa})` : " (permanente)"}`);
+    showMsg(`Usuario ${u.nombre} baneado${multa ? ` (multa S/ ${multa})` : hasta ? " (temporal)" : " (permanente)"}`);
     cargarTodo(); syncModal(null);
   }
 
@@ -489,6 +500,8 @@ export default function AdminPanel() {
     await supabase.from("usuarios").update({
       baneado: false,
       multa_reactivacion: null,
+      motivo_baneo: null,
+      baneo_hasta: null,
     }).eq("id", u.id);
     // Reactivar sus tiendas
     const { data: tiendasUsuario } = await supabase
@@ -782,16 +795,22 @@ export default function AdminPanel() {
                           <td style={{ color:"var(--muted)", fontSize:12 }}>{u.distrito}, {u.provincia}</td>
                           <td>
                             {u.baneado
-                              ? <span className="badge badge-red">
-                                  🚫 Baneado{u.multa_reactivacion ? ` · S/ ${u.multa_reactivacion}` : " · permanente"}
-                                </span>
+                              ? <>
+                                  <span className="badge badge-red">
+                                    🚫 Baneado{u.multa_reactivacion ? ` · S/ ${u.multa_reactivacion}` : ""}
+                                  </span>
+                                  <p style={{ fontSize:11, color:"var(--muted)", marginTop:4 }}>
+                                    {u.baneo_hasta ? `Hasta ${fecha(u.baneo_hasta)}` : "Permanente"}
+                                    {u.motivo_baneo ? ` · ${u.motivo_baneo}` : ""}
+                                  </p>
+                                </>
                               : <span className="badge badge-green">● Activo</span>
                             }
                           </td>
                           <td>
                             {u.baneado
                               ? <button className="btn-action btn-ok"  onClick={() => desbanearUsuario(u)}>✓ Desbanear</button>
-                              : <button className="btn-action btn-ban" onClick={() => { syncModal({ tipo:"banear", data:u }); setModalForm({ multa:"" }); }}>🚫 Banear</button>
+                              : <button className="btn-action btn-ban" onClick={() => { syncModal({ tipo:"banear", data:u }); setModalForm({ multa:"", motivo:"", hasta:"" }); }}>🚫 Banear</button>
                             }
                           </td>
                         </tr>
@@ -968,17 +987,31 @@ export default function AdminPanel() {
               <p className="modal-title">🚫 Banear usuario</p>
               <p className="modal-sub">
                 Vas a banear a <strong>"{modal.data.nombre}"</strong>. Sus tiendas quedarán suspendidas
-                e invisibles para los compradores. Define el monto de multa para poder reactivar,
-                o déjalo vacío para suspensión permanente sin opción de pago.
+                e invisibles para los compradores. El motivo y la duración se le mostrarán directamente
+                a el/ella al iniciar sesión.
               </p>
+
+              <label className="modal-field-label">Motivo del baneo</label>
+              <input className="inp-dark" type="text"
+                placeholder="Ej: publicó productos falsificados..."
+                value={modalForm.motivo || ""}
+                onChange={e => setModalForm({ ...modalForm, motivo: e.target.value })} />
+
+              <label className="modal-field-label">Fecha límite (vacío = permanente)</label>
+              <input className="inp-dark" type="date"
+                value={modalForm.hasta || ""}
+                onChange={e => setModalForm({ ...modalForm, hasta: e.target.value })} />
+
+              <label className="modal-field-label">Multa de reactivación en soles (opcional)</label>
               <input className="inp-dark" type="number" min="0" step="1"
-                placeholder="Monto de multa en soles (vacío = permanente)..."
+                placeholder="Ej: 20 (vacío = sin costo de reactivación)..."
                 value={modalForm.multa || ""}
-                onChange={e => setModalForm({ multa: e.target.value })} />
+                onChange={e => setModalForm({ ...modalForm, multa: e.target.value })} />
+
               <div className="modal-actions">
                 <button className="btn-cancel" onClick={() => syncModal(null)}>Cancelar</button>
                 <button className="btn-primary-dark" style={{ background:"linear-gradient(135deg,#7B0000,#EF4444)" }}
-                  onClick={() => banearUsuario(modal.data, modalForm.multa)}>
+                  onClick={() => banearUsuario(modal.data, modalForm)}>
                   Confirmar baneo
                 </button>
               </div>
