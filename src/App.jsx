@@ -117,10 +117,16 @@ const CSS = `
      3 capas: 1) degradado de marca oscurecido  2) velo negro direccional
      (más fuerte arriba y abajo, donde va el texto y el carrusel)
      3) la fotografía en sí.
+
+     IMPORTANTE: el archivo de imagen debe llamarse "hero-bg.jpg" y
+     colocarse en la carpeta "public" de tu proyecto (al mismo nivel
+     que logo.png). Se usa ruta absoluta "/hero-bg.jpg" para que
+     funcione igual que "/logo.png", sin importar desde qué pantalla
+     se renderice el componente.
   */
   .hero {
     width: 100%;
-    --hero-bg-img: url('./hero-bg.jpg');
+    --hero-bg-img: url('/hero-bg.jpg');
     background-image:
       linear-gradient(135deg, rgba(88,10,4,0.93) 0%, rgba(160,45,33,0.90) 38%, rgba(196,82,20,0.86) 72%, rgba(178,128,14,0.90) 100%),
       linear-gradient(to bottom, rgba(10,3,0,0.55) 0%, rgba(10,3,0,0.15) 35%, rgba(10,3,0,0.20) 65%, rgba(10,3,0,0.6) 100%),
@@ -469,8 +475,30 @@ const CSS = `
   .cart-item {
     display: flex; justify-content: space-between; padding: 11px 0;
     border-bottom: 1px solid #F0EAE0; align-items: center;
+    gap: 10px;
   }
   .cart-item:last-child { border-bottom: none; }
+  .cart-item-qty {
+    display: flex; align-items: center; gap: 8px; margin-top: 4px;
+  }
+  .cart-qty-btn {
+    width: 24px; height: 24px; border-radius: 6px;
+    border: 1.5px solid #E8E0D4; background: var(--gris);
+    color: var(--rojo); font-weight: 800; cursor: pointer;
+    font-size: 14px; line-height: 1; display: flex;
+    align-items: center; justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .cart-qty-btn:hover { background: #fff0ee; border-color: var(--rojo); }
+  .cart-qty-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .cart-qty-val { font-size: 13px; font-weight: 700; min-width: 16px; text-align: center; }
+  .cart-item-remove {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 16px; padding: 2px;
+    transition: color 0.15s;
+    flex-shrink: 0;
+  }
+  .cart-item-remove:hover { color: var(--rojo); }
   .cart-total {
     display: flex; justify-content: space-between;
     margin-top: 16px; font-weight: 900; font-size: 18px;
@@ -1149,6 +1177,27 @@ export default function App() {
     setCarrito([{ ...prod, cantidadCarrito: cantidad }]); setTiendaCarrito(tienda); setModalVaciar(null);
   }
 
+  // Cambia la cantidad de un producto ya en el carrito. Si la nueva
+  // cantidad llega a 0 (o menos), el producto se elimina del carrito.
+  function actualizarCantidadCarrito(prodId, nuevaCantidad) {
+    if (nuevaCantidad <= 0) { eliminarDelCarrito(prodId); return; }
+    playSound("click");
+    setCarrito(c => c.map(item =>
+      item.id === prodId ? { ...item, cantidadCarrito: nuevaCantidad } : item
+    ));
+  }
+
+  // Elimina un producto del carrito. Si era el último, también se
+  // limpia la tienda asociada al carrito para permitir comprar en otra.
+  function eliminarDelCarrito(prodId) {
+    playSound("close");
+    setCarrito(c => {
+      const nuevo = c.filter(item => item.id !== prodId);
+      if (nuevo.length === 0) setTiendaCarrito(null);
+      return nuevo;
+    });
+  }
+
   // Abre el panel de "agregar al carrito" con foto, nombre, descripción y selector de cantidad.
   function abrirPanelCarrito(prod) {
     if (!usuario) { login(); return; }
@@ -1572,9 +1621,32 @@ export default function App() {
                           <img src={firstFoto(p)} alt={p.nombre}
                             style={{ width:40, height:40, borderRadius:8, objectFit:"cover", flexShrink:0 }} />
                         )}
-                        <span style={{ fontSize:14 }}>{p.nombre} <span style={{ color:"var(--muted)" }}>x{p.cantidadCarrito}</span></span>
+                        <div>
+                          <span style={{ fontSize:14 }}>{p.nombre}</span>
+                          <div className="cart-item-qty">
+                            <button
+                              className="cart-qty-btn"
+                              onClick={() => actualizarCantidadCarrito(p.id, p.cantidadCarrito - 1)}
+                              title="Disminuir cantidad"
+                            >−</button>
+                            <span className="cart-qty-val">{p.cantidadCarrito}</span>
+                            <button
+                              className="cart-qty-btn"
+                              onClick={() => actualizarCantidadCarrito(p.id, p.cantidadCarrito + 1)}
+                              disabled={p.cantidad ? p.cantidadCarrito >= p.cantidad : false}
+                              title="Aumentar cantidad"
+                            >+</button>
+                          </div>
+                        </div>
                       </div>
-                      <span style={{ fontWeight:800, color:"var(--rojo)", fontFamily:"var(--font-head)" }}>S/ {(parseFloat(p.precio) * p.cantidadCarrito).toFixed(2)}</span>
+                      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                        <span style={{ fontWeight:800, color:"var(--rojo)", fontFamily:"var(--font-head)" }}>S/ {(parseFloat(p.precio) * p.cantidadCarrito).toFixed(2)}</span>
+                        <button
+                          className="cart-item-remove"
+                          onClick={() => eliminarDelCarrito(p.id)}
+                          title="Eliminar producto"
+                        >✕</button>
+                      </div>
                     </div>
                   ))}
                   <div className="cart-total">
