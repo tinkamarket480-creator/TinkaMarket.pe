@@ -169,7 +169,34 @@ const CSS = `
   }
   .hero-card-name { color: white; font-weight: 700; font-size: 13px; margin-bottom: 4px; }
   .hero-card-price { color: var(--oro2); font-weight: 900; font-size: 17px; margin-bottom: 4px; }
+  .hero-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
   .hero-card-likes { color: rgba(255,255,255,0.65); font-size: 12px; }
+  .hero-card-buy {
+    background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.4);
+    color: white; width: 30px; height: 30px; border-radius: 9px;
+    cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background 0.18s, transform 0.15s;
+  }
+  .hero-card-buy:hover { background: rgba(255,255,255,0.34); transform: translateY(-1px); }
+
+  /* ── PANEL AGREGAR AL CARRITO ── */
+  .qty-stepper { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+  .qty-btn {
+    width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+    background: var(--gris); border: 1.5px solid #E8E0D4;
+    color: var(--rojo); font-size: 19px; font-weight: 800;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .qty-btn:hover { background: #fff0ee; border-color: var(--rojo); }
+  .qty-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .qty-val { font-family: var(--font-head); font-weight: 800; font-size: 19px; min-width: 32px; text-align: center; }
+  .panel-prod-img {
+    width: 100%; height: 180px; border-radius: 14px; overflow: hidden;
+    background: var(--gris); display: flex; align-items: center; justify-content: center;
+    font-size: 46px; margin-bottom: 16px;
+  }
+  .panel-prod-img img { width: 100%; height: 100%; object-fit: cover; }
 
   /* ── WRAP / PAGE ── */
   .page { width: 100%; max-width: 1200px; margin: 0 auto; padding: 32px 20px 60px; }
@@ -851,6 +878,9 @@ export default function App() {
   const [carrito, setCarrito] = useState([]);
   const [tiendaCarrito, setTiendaCarrito] = useState(null);
   const [modalVaciar, setModalVaciar] = useState(null);
+  const [panelProducto, setPanelProducto] = useState(null);
+  const [panelCantidad, setPanelCantidad] = useState(1);
+  const [agregandoPanel, setAgregandoPanel] = useState(false);
   const [mostrarPerfil, setMostrarPerfil] = useState(false);
   const [mostrarFormProd, setMostrarFormProd] = useState(false);
 
@@ -1067,13 +1097,61 @@ export default function App() {
     }
   }
 
-  function agregarCarrito(prod, tienda) {
-    if (tiendaCarrito && tiendaCarrito.id !== tienda.id) { setModalVaciar({ prod, tienda }); return; }
-    setCarrito(c => [...c, prod]); setTiendaCarrito(tienda);
+  // Busca la tienda de un producto: primero en lo que ya tenemos cargado en memoria,
+  // y si no está ahí (por ejemplo tras una búsqueda que filtró la lista de tiendas),
+  // la trae directamente de la base de datos para no fallar en silencio.
+  async function obtenerTienda(tiendaId) {
+    const enCache = tiendas.find(x => x.id === tiendaId);
+    if (enCache) return enCache;
+    const { data } = await supabase.from("tiendas").select("*").eq("id", tiendaId).single();
+    return data || null;
   }
 
-  function vaciarYAgregar(prod, tienda) {
-    setCarrito([prod]); setTiendaCarrito(tienda); setModalVaciar(null);
+  function agregarCarrito(prod, tienda, cantidad = 1) {
+    if (tiendaCarrito && tiendaCarrito.id !== tienda.id) { setModalVaciar({ prod, tienda, cantidad }); return; }
+    setCarrito(c => {
+      const idx = c.findIndex(item => item.id === prod.id);
+      if (idx >= 0) {
+        const copia = [...c];
+        copia[idx] = { ...copia[idx], cantidadCarrito: copia[idx].cantidadCarrito + cantidad };
+        return copia;
+      }
+      return [...c, { ...prod, cantidadCarrito: cantidad }];
+    });
+    setTiendaCarrito(tienda);
+  }
+
+  function vaciarYAgregar(prod, tienda, cantidad = 1) {
+    setCarrito([{ ...prod, cantidadCarrito: cantidad }]); setTiendaCarrito(tienda); setModalVaciar(null);
+  }
+
+  // Abre el panel de "agregar al carrito" con foto, nombre, descripción y selector de cantidad.
+  function abrirPanelCarrito(prod) {
+    if (!usuario) { login(); return; }
+    playSound("open");
+    setPanelProducto(prod);
+    setPanelCantidad(1);
+  }
+
+  function cerrarPanelCarrito() {
+    playSound("close");
+    setPanelProducto(null);
+  }
+
+  async function confirmarAgregarCarrito() {
+    if (!panelProducto) return;
+    setAgregandoPanel(true);
+    const t = await obtenerTienda(panelProducto.tienda_id);
+    if (!t) {
+      playSound("error");
+      setMsg("No se pudo encontrar la tienda de este producto. Intenta de nuevo.");
+      setAgregandoPanel(false);
+      return;
+    }
+    agregarCarrito(panelProducto, t, panelCantidad);
+    playSound("success");
+    setAgregandoPanel(false);
+    setPanelProducto(null);
   }
 
   async function verWhatsApp(tienda) {
@@ -1085,8 +1163,8 @@ export default function App() {
   async function comprarWhatsApp() {
     if (!tiendaCarrito || !usuario) return;
     if (perfilDB?.id) await supabase.from("vistas_whatsapp").insert({ tienda_id: tiendaCarrito.id, comprador_id: perfilDB.id });
-    const lista = carrito.map(p => `- ${p.nombre}: S/ ${p.precio}`).join("\n");
-    const total = carrito.reduce((s, p) => s + parseFloat(p.precio), 0);
+    const lista = carrito.map(p => `- ${p.nombre} x${p.cantidadCarrito}: S/ ${(parseFloat(p.precio) * p.cantidadCarrito).toFixed(2)}`).join("\n");
+    const total = carrito.reduce((s, p) => s + parseFloat(p.precio) * p.cantidadCarrito, 0);
     const nombre = perfilDB ? `${perfilDB.nombre} ${perfilDB.apellidos || ''}`.trim() : (usuario.user_metadata?.full_name || "Cliente");
     const idUsuario = perfilDB?.usuario_id || "--------";
     const texto = `Hola ${tiendaCarrito.nombre}, soy ${nombre} (ID: ${idUsuario}). Quiero comprar:\n${lista}\nTotal: S/ ${total.toFixed(2)}`;
@@ -1210,7 +1288,7 @@ export default function App() {
         </div>
         <div className="nav-actions">
           {usuario
-            ? <button className="nav-btn" onClick={() => ir("carrito")}>🛒{carrito.length > 0 ? ` ${carrito.length}` : ""}</button>
+            ? <button className="nav-btn" onClick={() => ir("carrito")}>🛒{carrito.length > 0 ? ` ${carrito.reduce((s,p)=>s+p.cantidadCarrito,0)}` : ""}</button>
             : <button className="nav-btn" onClick={login}>Iniciar sesión</button>
           }
           <button className="nav-btn" style={{ padding:"7px 12px" }} onClick={() => setMenuOpen(true)}>☰</button>
@@ -1236,7 +1314,10 @@ export default function App() {
                   )}
                   <p className="hero-card-name">{p.nombre}</p>
                   <p className="hero-card-price">S/ {p.precio}</p>
-                  <p className="hero-card-likes">❤️ {p.likes} likes</p>
+                  <div className="hero-card-foot">
+                    <p className="hero-card-likes">❤️ {p.likes} likes</p>
+                    <button className="hero-card-buy" title="Agregar al carrito" onClick={() => abrirPanelCarrito(p)}>🛒</button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1280,11 +1361,7 @@ export default function App() {
                       </button>
                     </div>
                     <button className="btn-primary" style={{ marginTop:8, marginBottom:0, fontSize:13, padding:"9px 0" }}
-                      onClick={() => {
-                        if (!usuario) { login(); return; }
-                        const t = tiendas.find(x => x.id === p.tienda_id);
-                        if (t) agregarCarrito(p, t);
-                      }}>
+                      onClick={() => abrirPanelCarrito(p)}>
                       Agregar al carrito
                     </button>
                   </div>
@@ -1340,11 +1417,7 @@ export default function App() {
                         </button>
                       </div>
                       <button className="btn-primary" style={{ marginTop:8, marginBottom:0, fontSize:13, padding:"9px 0" }}
-                        onClick={() => {
-                          if (!usuario) { login(); return; }
-                          const t = tiendas.find(x => x.id === p.tienda_id);
-                          if (t) agregarCarrito(p, t);
-                        }}>
+                        onClick={() => abrirPanelCarrito(p)}>
                         Agregar al carrito
                       </button>
                     </div>
@@ -1393,7 +1466,7 @@ export default function App() {
                       <p className="prod-price">S/ {p.precio}</p>
                       {p.descripcion && <p style={{ fontSize:12, color:"var(--muted)", lineHeight:1.5 }}>{p.descripcion}</p>}
                       <button className="btn-primary" style={{ marginTop:8, marginBottom:0, fontSize:13, padding:"9px 0" }}
-                        onClick={() => { if(!usuario){login();return;} agregarCarrito(p,t); }}>
+                        onClick={() => abrirPanelCarrito(p)}>
                         Agregar al carrito
                       </button>
                     </div>
@@ -1427,11 +1500,7 @@ export default function App() {
                       <p className="prod-name">{p.nombre}</p>
                       <p className="prod-price">S/ {p.precio}</p>
                       <button className="btn-primary" style={{ marginTop:8, marginBottom:0, fontSize:13, padding:"9px 0" }}
-                        onClick={() => {
-                          if (!usuario) { login(); return; }
-                          const t = tiendas.find(x => x.id === p.tienda_id);
-                          if (t) agregarCarrito(p, t);
-                        }}>
+                        onClick={() => abrirPanelCarrito(p)}>
                         Agregar al carrito
                       </button>
                     </div>
@@ -1479,14 +1548,14 @@ export default function App() {
                           <img src={firstFoto(p)} alt={p.nombre}
                             style={{ width:40, height:40, borderRadius:8, objectFit:"cover", flexShrink:0 }} />
                         )}
-                        <span style={{ fontSize:14 }}>{p.nombre}</span>
+                        <span style={{ fontSize:14 }}>{p.nombre} <span style={{ color:"var(--muted)" }}>x{p.cantidadCarrito}</span></span>
                       </div>
-                      <span style={{ fontWeight:800, color:"var(--rojo)", fontFamily:"var(--font-head)" }}>S/ {p.precio}</span>
+                      <span style={{ fontWeight:800, color:"var(--rojo)", fontFamily:"var(--font-head)" }}>S/ {(parseFloat(p.precio) * p.cantidadCarrito).toFixed(2)}</span>
                     </div>
                   ))}
                   <div className="cart-total">
                     <span>Total</span>
-                    <span style={{ color:"var(--rojo)" }}>S/ {carrito.reduce((s,p) => s+parseFloat(p.precio),0).toFixed(2)}</span>
+                    <span style={{ color:"var(--rojo)" }}>S/ {carrito.reduce((s,p) => s+parseFloat(p.precio)*p.cantidadCarrito,0).toFixed(2)}</span>
                   </div>
                 </div>
                 <button className="btn-wa" onClick={comprarWhatsApp}>📲 Comprar por WhatsApp</button>
@@ -1810,8 +1879,41 @@ export default function App() {
           <div className="modal-box">
             <p className="modal-title">¿Vaciar carrito?</p>
             <p className="modal-sub">Ya tienes productos de otra tienda. Si continúas se vaciará tu carrito actual.</p>
-            <button className="btn-primary" onClick={() => vaciarYAgregar(modalVaciar.prod, modalVaciar.tienda)}>Vaciar y agregar</button>
+            <button className="btn-primary" onClick={() => vaciarYAgregar(modalVaciar.prod, modalVaciar.tienda, modalVaciar.cantidad)}>Vaciar y agregar</button>
             <button className="btn-secondary" onClick={() => setModalVaciar(null)}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {/* PANEL AGREGAR AL CARRITO: foto, nombre, descripción y selector de cantidad */}
+      {panelProducto && (
+        <div className="modal-wrap">
+          <div className="modal-bg" onClick={cerrarPanelCarrito} />
+          <div className="modal-box" style={{ maxWidth:360, textAlign:"left" }}>
+            <div className="panel-prod-img">
+              {firstFoto(panelProducto)
+                ? <img src={firstFoto(panelProducto)} alt={panelProducto.nombre} />
+                : <span>📦</span>
+              }
+            </div>
+            <p style={{ fontFamily:"var(--font-head)", fontWeight:800, fontSize:17, marginBottom:6, color:"var(--cafe)" }}>{panelProducto.nombre}</p>
+            {panelProducto.descripcion && (
+              <p style={{ fontSize:13, color:"var(--muted)", lineHeight:1.6, marginBottom:14 }}>{panelProducto.descripcion}</p>
+            )}
+            <p style={{ fontFamily:"var(--font-head)", fontWeight:900, fontSize:22, color:"var(--rojo)", marginBottom:18 }}>S/ {panelProducto.precio}</p>
+
+            <p style={{ fontSize:13, fontWeight:700, color:"var(--muted)", marginBottom:8 }}>Cantidad</p>
+            <div className="qty-stepper">
+              <button className="qty-btn" onClick={() => setPanelCantidad(q => Math.max(1, q - 1))} disabled={panelCantidad <= 1}>−</button>
+              <span className="qty-val">{panelCantidad}</span>
+              <button className="qty-btn" onClick={() => setPanelCantidad(q => Math.min(panelProducto.cantidad || 99, q + 1))} disabled={panelProducto.cantidad ? panelCantidad >= panelProducto.cantidad : false}>+</button>
+              {panelProducto.cantidad ? <span style={{ fontSize:12, color:"var(--muted)" }}>{panelProducto.cantidad} disponibles</span> : null}
+            </div>
+
+            <button className="btn-primary" onClick={confirmarAgregarCarrito} disabled={agregandoPanel}>
+              {agregandoPanel ? "Agregando..." : `Agregar al carrito · S/ ${(parseFloat(panelProducto.precio) * panelCantidad).toFixed(2)}`}
+            </button>
+            <button className="btn-secondary" onClick={cerrarPanelCarrito}>Cancelar</button>
           </div>
         </div>
       )}
@@ -1843,7 +1945,7 @@ export default function App() {
                 : <>
                   <div className="drawer-item" onClick={() => ir("miperfil")}><span className="drawer-item-icon">👤</span> Mi perfil</div>
                   <div className="drawer-item" onClick={() => ir("mitienda")}><span className="drawer-item-icon">🏪</span> {miTienda ? "Mi tienda" : "Crear mi tienda"}</div>
-                  <div className="drawer-item" onClick={() => ir("carrito")}><span className="drawer-item-icon">🛒</span> Mi carrito{carrito.length>0?` (${carrito.length})`:""}</div>
+                  <div className="drawer-item" onClick={() => ir("carrito")}><span className="drawer-item-icon">🛒</span> Mi carrito{carrito.length>0?` (${carrito.reduce((s,p)=>s+p.cantidadCarrito,0)})`:""}</div>
                 </>
               }
               <div className="drawer-item" onClick={() => ir("comovender")}><span className="drawer-item-icon">📖</span> Cómo vender</div>
