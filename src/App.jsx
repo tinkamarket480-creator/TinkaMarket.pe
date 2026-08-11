@@ -109,10 +109,25 @@ const CSS = `
   }
   .nav-btn:hover { background: rgba(255,255,255,0.32); transform: translateY(-1px); }
 
-  /* ── HERO ── */
+  /* ── HERO ──────────────────────────────────────────────────────
+     Imagen de fondo (artesanías peruanas) + degradado de marca encima.
+     El degradado ahora es más opaco/oscuro que antes para garantizar
+     contraste perfecto del texto blanco sobre una foto clara y con
+     muchos colores (mimbre claro, cuentas rojas/amarillas/turquesas).
+     3 capas: 1) degradado de marca oscurecido  2) velo negro direccional
+     (más fuerte arriba y abajo, donde va el texto y el carrusel)
+     3) la fotografía en sí.
+  */
   .hero {
     width: 100%;
-    background: var(--grad);
+    --hero-bg-img: url('./hero-bg.jpg');
+    background-image:
+      linear-gradient(135deg, rgba(88,10,4,0.93) 0%, rgba(160,45,33,0.90) 38%, rgba(196,82,20,0.86) 72%, rgba(178,128,14,0.90) 100%),
+      linear-gradient(to bottom, rgba(10,3,0,0.55) 0%, rgba(10,3,0,0.15) 35%, rgba(10,3,0,0.20) 65%, rgba(10,3,0,0.6) 100%),
+      var(--hero-bg-img);
+    background-size: cover, cover, cover;
+    background-position: center, center, center 38%;
+    background-repeat: no-repeat, no-repeat, no-repeat;
     padding: 56px 24px 44px;
     text-align: center;
     position: relative;
@@ -121,26 +136,33 @@ const CSS = `
   .hero::before {
     content: '';
     position: absolute; inset: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
   }
   .hero-badge {
     display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.16);
+    border: 1px solid rgba(255,255,255,0.45);
     color: white; padding: 6px 20px; border-radius: 100px;
     font-size: 11px; letter-spacing: 2px; font-weight: 700;
     margin-bottom: 20px; text-transform: uppercase;
+    backdrop-filter: blur(3px);
+    position: relative; z-index: 1;
   }
   .hero-title {
     font-family: var(--font-head); color: white;
     font-size: clamp(30px, 5.5vw, 54px);
     font-weight: 900; line-height: 1.15;
     margin-bottom: 12px;
+    text-shadow: 0 3px 18px rgba(0,0,0,0.45), 0 1px 3px rgba(0,0,0,0.5);
+    position: relative; z-index: 1;
   }
   .hero-title .oro { color: var(--oro2); }
   .hero-title .verde { color: #7ECBA1; }
   .hero-sub {
-    color: rgba(255,255,255,0.8); font-size: 15px; margin-bottom: 28px;
+    color: rgba(255,255,255,0.92); font-size: 15px; margin-bottom: 28px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    position: relative; z-index: 1;
   }
 
   /* Carrusel hero */
@@ -148,17 +170,19 @@ const CSS = `
     display: flex; gap: 14px; overflow-x: auto;
     padding: 4px 4px 12px; scroll-snap-type: x mandatory;
     scrollbar-width: none;
+    position: relative; z-index: 1;
   }
   .hero-carousel::-webkit-scrollbar { display: none; }
   .hero-card {
     min-width: 160px; flex-shrink: 0;
-    background: rgba(255,255,255,0.14);
-    border: 1px solid rgba(255,255,255,0.28);
+    background: rgba(255,255,255,0.16);
+    border: 1px solid rgba(255,255,255,0.3);
     border-radius: 14px; padding: 16px;
     scroll-snap-align: start; text-align: left;
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(8px);
     transition: transform 0.2s;
     overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
   }
   .hero-card:hover { transform: translateY(-3px); }
   .hero-card-img {
@@ -170,7 +194,7 @@ const CSS = `
   .hero-card-name { color: white; font-weight: 700; font-size: 13px; margin-bottom: 4px; }
   .hero-card-price { color: var(--oro2); font-weight: 900; font-size: 17px; margin-bottom: 4px; }
   .hero-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
-  .hero-card-likes { color: rgba(255,255,255,0.65); font-size: 12px; }
+  .hero-card-likes { color: rgba(255,255,255,0.7); font-size: 12px; }
   .hero-card-buy {
     background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.4);
     color: white; width: 30px; height: 30px; border-radius: 9px;
