@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Component } from "react";
 import { supabase } from "./supabase";
 
 // ─── Paleta & fuentes ───────────────────────────────────────────────
@@ -883,6 +883,74 @@ function playSound(type) {
   }
 }
 
+// ─── Error Boundary ─────────────────────────────────────────────────
+// Atrapa errores de render inesperados (por ejemplo, conflictos de
+// reconciliación del DOM) para evitar que la app se quede en pantalla
+// en blanco. Si algo falla, muestra un aviso simple con botón de recarga
+// en vez de crashear toda la aplicación.
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+  componentDidCatch(error, info) {
+    console.error("Error capturado por ErrorBoundary:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          minHeight: "100vh", display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center", padding: 24,
+          fontFamily: "sans-serif", textAlign: "center", background: "#FDF6EC",
+        }}>
+          <p style={{ fontSize: 18, fontWeight: 800, marginBottom: 10, color: "#C0392B" }}>
+            Ocurrió un problema al mostrar esta pantalla
+          </p>
+          <p style={{ fontSize: 14, color: "#7A6555", marginBottom: 20 }}>
+            Intenta recargar la página.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              background: "linear-gradient(135deg,#7B1208,#C0392B,#E8651A,#D4A017)",
+              color: "white", border: "none", borderRadius: 50, padding: "12px 28px",
+              fontWeight: 800, cursor: "pointer", fontSize: 14,
+            }}
+          >Recargar</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// Suprime el error específico "NotFoundError: Failed to execute 'removeChild'"
+// que puede ocurrir por condiciones de carrera entre React y el navegador al
+// remover nodos del DOM. Es un error conocido y generalmente inofensivo (el
+// estado de la app sigue siendo correcto); sin esto, puede quedar como
+// "Uncaught" y en algunos navegadores interrumpir la actualización visual.
+function useSuprimirErrorDOMBenigno() {
+  useEffect(() => {
+    const handler = (event) => {
+      const msg = event?.message || event?.error?.message || "";
+      if (
+        msg.includes("removeChild") ||
+        msg.includes("insertBefore") ||
+        (event?.error?.name === "NotFoundError")
+      ) {
+        event.preventDefault();
+        console.warn("Se ignoró un error benigno de reconciliación del DOM.");
+      }
+    };
+    window.addEventListener("error", handler);
+    return () => window.removeEventListener("error", handler);
+  }, []);
+}
+
 // ─── Sub-componente: imagen de producto con galería ───────────────────
 function ProdImgViewer({ fotos, fallbackIcon = "📦" }) {
   const [idx, setIdx] = useState(0);
@@ -916,7 +984,8 @@ function ProdImgViewer({ fotos, fallbackIcon = "📦" }) {
 }
 
 // ─── Componente principal ─────────────────────────────────────────────
-export default function App() {
+function AppInterno() {
+  useSuprimirErrorDOMBenigno();
   const [pantalla, setPantalla] = useState("inicio");
   const [usuario, setUsuario] = useState(null);
   const [perfilDB, setPerfilDB] = useState(null);
@@ -1610,7 +1679,7 @@ export default function App() {
             : carrito.length === 0
               ? <div className="empty"><div className="empty-icon">🛒</div><p className="empty-txt">Tu carrito está vacío</p></div>
               : <>
-                <div className="cart-card">
+                <div className="cart-card" key={carrito.map(p => p.id).join("-")}>
                   <p style={{ fontWeight:800, marginBottom:2, fontFamily:"var(--font-head)", fontSize:15 }}>{perfilDB ? `${perfilDB.nombre} ${perfilDB.apellidos || ''}`.trim() : usuario.user_metadata?.full_name}</p>
                   <p style={{ fontSize:12, color:"var(--muted)", marginBottom:2 }}>ID: {perfilDB?.usuario_id}</p>
                   <p style={{ fontSize:13, color:"var(--muted)", marginBottom:16 }}>Tienda: <strong>{tiendaCarrito?.nombre}</strong></p>
@@ -2053,5 +2122,14 @@ export default function App() {
         </>
       )}
     </div>
+  );
+}
+
+// ─── Export por defecto: AppInterno envuelto en ErrorBoundary ─────────
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppInterno />
+    </ErrorBoundary>
   );
 }
