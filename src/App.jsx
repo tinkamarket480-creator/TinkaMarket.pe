@@ -1614,8 +1614,8 @@ export default function App() {
                   <p style={{ fontWeight:800, marginBottom:2, fontFamily:"var(--font-head)", fontSize:15 }}>{perfilDB ? `${perfilDB.nombre} ${perfilDB.apellidos || ''}`.trim() : usuario.user_metadata?.full_name}</p>
                   <p style={{ fontSize:12, color:"var(--muted)", marginBottom:2 }}>ID: {perfilDB?.usuario_id}</p>
                   <p style={{ fontSize:13, color:"var(--muted)", marginBottom:16 }}>Tienda: <strong>{tiendaCarrito?.nombre}</strong></p>
-                  {carrito.map((p, i) => (
-                    <div key={i} className="cart-item">
+                  {carrito.map((p) => (
+                    <div key={p.id} className="cart-item">
                       <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                         {firstFoto(p) && (
                           <img src={firstFoto(p)} alt={p.nombre}
