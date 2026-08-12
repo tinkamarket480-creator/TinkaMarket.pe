@@ -713,7 +713,7 @@ export default function AdminPanel() {
                     <span className="reporte-fecha">{fecha(r.created_at)}</span>
                   </div>
                   <p className="reporte-motivo">{r.motivo}</p>
-                  <p className="id-mono" style={{ marginBottom:10 }}>Reportado por: {nombreUsuario(r.reportado_por)}</p>
+                  <p className="id-mono" style={{ marginBottom:10 }}>Reportado por ID: {r.reportado_por}</p>
                   {r.estado !== "revisado" && (
                     <button className="btn-action btn-ok" onClick={() => marcarReporteRevisado(r)}>
                       ✓ Marcar como revisado
