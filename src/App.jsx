@@ -110,40 +110,46 @@ const CSS = `
   .nav-btn:hover { background: rgba(255,255,255,0.32); transform: translateY(-1px); }
 
   /* ── HERO ──────────────────────────────────────────────────────
-     Imagen de fondo (artesanías peruanas) + degradado de marca encima.
-     El degradado ahora es más opaco/oscuro que antes para garantizar
-     contraste perfecto del texto blanco sobre una foto clara y con
-     muchos colores (mimbre claro, cuentas rojas/amarillas/turquesas).
-     3 capas: 1) degradado de marca oscurecido  2) velo negro direccional
-     (más fuerte arriba y abajo, donde va el texto y el carrusel)
-     3) la fotografía en sí.
+     La imagen de fondo se carga sola (background-image en .hero).
+     Encima va .hero-gradient, una capa separada con el degradado de
+     marca + velo oscuro. Al montar el componente, el degradado sale
+     totalmente opaco (como una portada normal). Cuando la imagen de
+     fondo termina de precargarse en JS, se le agrega la clase
+     "hero-loaded", que baja su opacidad con una transición suave y
+     deja ver la fotografía debajo.
 
      IMPORTANTE: el archivo de imagen debe llamarse "hero-bg.jpg" y
      colocarse en la carpeta "public" de tu proyecto (al mismo nivel
-     que logo.png). Se usa ruta absoluta "/hero-bg.jpg" para que
-     funcione igual que "/logo.png", sin importar desde qué pantalla
-     se renderice el componente.
+     que logo.png). Se usa ruta absoluta "/hero-bg.jpg".
   */
   .hero {
     width: 100%;
-    --hero-bg-img: url('/hero-bg.jpg');
-    background-image:
-      linear-gradient(135deg, rgba(88,10,4,0.93) 0%, rgba(160,45,33,0.90) 38%, rgba(196,82,20,0.86) 72%, rgba(178,128,14,0.90) 100%),
-      linear-gradient(to bottom, rgba(10,3,0,0.55) 0%, rgba(10,3,0,0.15) 35%, rgba(10,3,0,0.20) 65%, rgba(10,3,0,0.6) 100%),
-      var(--hero-bg-img);
-    background-size: cover, cover, cover;
-    background-position: center, center, center 38%;
-    background-repeat: no-repeat, no-repeat, no-repeat;
     padding: 56px 24px 44px;
     text-align: center;
     position: relative;
     overflow: hidden;
+    background-image: url('/hero-bg.jpg');
+    background-size: cover;
+    background-position: center 38%;
+    background-repeat: no-repeat;
   }
+  .hero-gradient {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(135deg, rgba(88,10,4,0.93) 0%, rgba(160,45,33,0.90) 38%, rgba(196,82,20,0.86) 72%, rgba(178,128,14,0.90) 100%),
+      linear-gradient(to bottom, rgba(10,3,0,0.55) 0%, rgba(10,3,0,0.15) 35%, rgba(10,3,0,0.20) 65%, rgba(10,3,0,0.6) 100%);
+    opacity: 1;
+    transition: opacity 1.4s ease;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .hero-gradient.hero-loaded { opacity: 0.55; }
   .hero::before {
     content: '';
     position: absolute; inset: 0;
     background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
     pointer-events: none;
+    z-index: 2;
   }
   .hero-badge {
     display: inline-flex; align-items: center; gap: 6px;
@@ -153,7 +159,7 @@ const CSS = `
     font-size: 11px; letter-spacing: 2px; font-weight: 700;
     margin-bottom: 20px; text-transform: uppercase;
     backdrop-filter: blur(3px);
-    position: relative; z-index: 1;
+    position: relative; z-index: 3;
   }
   .hero-title {
     font-family: var(--font-head); color: white;
@@ -161,14 +167,14 @@ const CSS = `
     font-weight: 900; line-height: 1.15;
     margin-bottom: 12px;
     text-shadow: 0 3px 18px rgba(0,0,0,0.45), 0 1px 3px rgba(0,0,0,0.5);
-    position: relative; z-index: 1;
+    position: relative; z-index: 3;
   }
   .hero-title .oro { color: var(--oro2); }
   .hero-title .verde { color: #7ECBA1; }
   .hero-sub {
     color: rgba(255,255,255,0.92); font-size: 15px; margin-bottom: 28px;
     text-shadow: 0 2px 10px rgba(0,0,0,0.4);
-    position: relative; z-index: 1;
+    position: relative; z-index: 3;
   }
 
   /* Carrusel hero */
@@ -176,7 +182,7 @@ const CSS = `
     display: flex; gap: 14px; overflow-x: auto;
     padding: 4px 4px 12px; scroll-snap-type: x mandatory;
     scrollbar-width: none;
-    position: relative; z-index: 1;
+    position: relative; z-index: 3;
   }
   .hero-carousel::-webkit-scrollbar { display: none; }
   .hero-card {
@@ -770,6 +776,27 @@ const CATS_INFO = [
   { nombre:"Otros",           desc:"Variedad de productos locales", bg:"linear-gradient(135deg,#6B3FA0,#4A2070)", icon:"✨" },
 ];
 
+// ─── Duración de tiendas y productos ───────────────────────────────────
+// Tiendas: 300 días. Productos: 30 días.
+// Para tiendas se usa "renovado_at" si existe (se actualiza cuando el
+// panel admin renueva la tienda); si no existe, se usa "created_at".
+const DIAS_TIENDA = 300;
+const DIAS_PRODUCTO = 30;
+
+function fechaBaseTienda(t) {
+  return t?.renovado_at || t?.created_at;
+}
+function diasTranscurridos(fecha) {
+  if (!fecha) return 0;
+  return Math.floor((Date.now() - new Date(fecha).getTime()) / 86400000);
+}
+function diasRestantes(fecha, totalDias) {
+  return Math.max(0, totalDias - diasTranscurridos(fecha));
+}
+function estaVencido(fecha, totalDias) {
+  return diasTranscurridos(fecha) >= totalDias;
+}
+
 const UBIGEO = {
   "Amazonas":{"Chachapoyas":["Chachapoyas","Asunción","Balsas","Cheto","Chiliquín","Chuquibamba","Granada","Huancas","La Jalca","Leimebamba","Levanto","Magdalena","Mariscal Castilla","Molinopampa","Montevideo","Olleros","Quinjalca","San Francisco de Daguas","San Isidro de Maino","Soloco","Sonche"],"Bagua":["Bagua","La Peca","Aramango","Copallin","El Parco","Imaza","Copallín"],"Bongará":["Jumbilla","Chisquilla","Churuja","Corosha","Cuispes","Florida","Jazán","Recta","San Carlos","Shipasbamba","Valera","Yambrasbamba"],"Utcubamba":["Bagua Grande","Cajaruro","Cumba","El Milagro","Jamalca","Lonya Grande","Yamón"]},
   "Áncash":{"Huaraz":["Huaraz","Cochabamba","Colcabamba","Huanchay","Independencia","Jangas","La Libertad","Llanganuco","Pampas","Paria","Tarica"],"Santa":["Chimbote","Cáceres del Perú","Coishco","Macate","Moro","Nepeña","Samanco","Santa","Nuevo Chimbote"],"Casma":["Casma","Buenavista Alta","Comandante Noel","Yaután"],"Huarmey":["Huarmey","Cochapetí","Huamba","Malvas","Pampas Chico"]},
@@ -1004,6 +1031,7 @@ function AppInterno() {
   const [agregandoPanel, setAgregandoPanel] = useState(false);
   const [mostrarPerfil, setMostrarPerfil] = useState(false);
   const [mostrarFormProd, setMostrarFormProd] = useState(false);
+  const [heroLoaded, setHeroLoaded] = useState(false);
 
   const [perfilForm, setPerfilForm] = useState({ nombre:"", apellido:"", departamento:"", provincia:"", distrito:"" });
   const [tiendaForm, setTiendaForm] = useState({ nombre:"", whatsapp:"", departamento:"", provincia:"", distrito:"", direccion:"", descripcion:"" });
@@ -1029,6 +1057,16 @@ function AppInterno() {
     });
     cargarProductos();
     cargarTiendas();
+  }, []);
+
+  // Precarga la imagen del hero en segundo plano. Cuando termina de
+  // cargar (o falla), activa la clase que hace que el degradado del
+  // hero se vuelva más transparente y deje ver la foto de fondo.
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setHeroLoaded(true);
+    img.onerror = () => setHeroLoaded(true);
+    img.src = "/hero-bg.jpg";
   }, []);
 
   async function iniciarSesion(user) {
@@ -1077,9 +1115,8 @@ function AppInterno() {
     setGuardando(false);
   }
 
-  // Trae solo productos cuya tienda esté "activa" o "revision".
-  // Así, si la tienda dueña está suspendida, sus productos dejan de
-  // aparecer en el catálogo general aunque el registro siga existiendo.
+  // Trae solo productos cuya tienda esté "activa" o "revision", y cuyo
+  // plazo de 30 días de publicación no haya vencido.
   async function cargarProductos(cat = null) {
     let q = supabase
       .from("productos")
@@ -1089,14 +1126,16 @@ function AppInterno() {
     if (cat && cat !== "Todos") q = q.eq("categoria", cat);
     const { data, error } = await q;
     if (error) { console.error("Error cargando productos:", error); setProductos([]); return; }
-    setProductos(data || []);
+    setProductos((data || []).filter(p => !estaVencido(p.created_at, DIAS_PRODUCTO)));
   }
 
   // Incluye "revision" además de "activa" para que las tiendas en
-  // revisión también aparezcan (se distinguen con el badge 👁️ en su perfil).
+  // revisión también aparezcan (se distinguen con el badge 👁️ en su perfil),
+  // y filtra las que ya superaron los 300 días desde su creación o última
+  // renovación (renovado_at).
   async function cargarTiendas() {
     const { data } = await supabase.from("tiendas").select("*").in("estado", ["activa", "revision"]);
-    setTiendas(data || []);
+    setTiendas((data || []).filter(t => !estaVencido(fechaBaseTienda(t), DIAS_TIENDA)));
   }
 
   async function cargarMiTienda(uid) {
@@ -1116,7 +1155,9 @@ function AppInterno() {
     if (cat) qP = qP.eq("categoria", cat);
     const qT = supabase.from("tiendas").select("*").in("estado", ["activa","revision"]).ilike("nombre", `%${busqueda}%`);
     const [{ data:p }, { data:t }] = await Promise.all([qP, qT]);
-    setProductos(p || []); setTiendas(t || []); setPantalla("busqueda");
+    setProductos((p || []).filter(x => !estaVencido(x.created_at, DIAS_PRODUCTO)));
+    setTiendas((t || []).filter(x => !estaVencido(fechaBaseTienda(x), DIAS_TIENDA)));
+    setPantalla("busqueda");
   }
 
   async function login() {
@@ -1339,6 +1380,20 @@ function AppInterno() {
   }
 
   const ir = (p) => { setPantalla(p); setMenuOpen(false); setMsg(""); window.scrollTo(0,0); };
+
+  // Navega al perfil de una tienda: si es la tienda del usuario que está
+  // navegando, lo lleva directo a "Mi tienda" (panel de gestión) en vez
+  // del perfil público de solo lectura/WhatsApp.
+  function irATienda(t) {
+    if (miTienda && t.id === miTienda.id) {
+      ir("mitienda");
+    } else {
+      setPantalla("tienda_" + t.id);
+      setMenuOpen(false);
+      window.scrollTo(0, 0);
+    }
+  }
+
   const deps = Object.keys(UBIGEO).sort();
   const provsDisp = tiendaForm.departamento ? Object.keys(UBIGEO[tiendaForm.departamento] || {}).sort() : [];
   const distDisp = (tiendaForm.departamento && tiendaForm.provincia) ? (UBIGEO[tiendaForm.departamento]?.[tiendaForm.provincia] || []).sort() : [];
@@ -1440,6 +1495,7 @@ function AppInterno() {
       {/* HERO */}
       {pantalla === "inicio" && (
         <div className="hero">
+          <div className={`hero-gradient${heroLoaded ? " hero-loaded" : ""}`} />
           <div className="hero-badge">🇵🇪 Solo para el Perú</div>
           <h1 className="hero-title">
             Lo nuestro.<br />
@@ -1517,7 +1573,7 @@ function AppInterno() {
             ? <div className="empty"><div className="empty-icon">🏪</div><p className="empty-txt">Aún no hay tiendas activas</p></div>
             : <div className="grid grid-tienda">
               {tiendas.map(t => (
-                <div key={t.id} className="tienda-card" onClick={() => { setPantalla("tienda_"+t.id); window.scrollTo(0,0); }}>
+                <div key={t.id} className="tienda-card" onClick={() => irATienda(t)}>
                   {t.foto_url
                     ? <img src={t.foto_url} alt={t.nombre} className="tienda-avatar" />
                     : <div className="tienda-avatar-letter">{t.nombre[0]}</div>
@@ -1570,9 +1626,19 @@ function AppInterno() {
           </>;
         })()}
 
-        {/* ── PERFIL TIENDA ── */}
+        {/* ── PERFIL TIENDA (vista pública) ── */}
         {pantalla.startsWith("tienda_") && (() => {
           const tid = pantalla.replace("tienda_","");
+
+          // Si de alguna forma se llega aquí siendo la propia tienda del
+          // usuario (por ejemplo un estado antiguo o un enlace directo),
+          // redirige al panel de gestión "Mi tienda" en vez de mostrar
+          // la vista pública de solo lectura.
+          if (miTienda && tid === miTienda.id) {
+            setTimeout(() => ir("mitienda"), 0);
+            return null;
+          }
+
           const t = tiendas.find(x => x.id === tid);
           if (!t) return <div className="empty"><p className="empty-txt">Tienda no encontrada</p></div>;
           const prodsTienda = productos.filter(p => p.tienda_id === tid);
@@ -1651,7 +1717,7 @@ function AppInterno() {
               </div>}
               {tiendas.length > 0 && <div className="grid grid-tienda">
                 {tiendas.map(t => (
-                  <div key={t.id} className="tienda-card" onClick={() => { setPantalla("tienda_"+t.id); window.scrollTo(0,0); }}>
+                  <div key={t.id} className="tienda-card" onClick={() => irATienda(t)}>
                     {t.foto_url
                       ? <img src={t.foto_url} alt={t.nombre} className="tienda-avatar" />
                       : <div className="tienda-avatar-letter">{t.nombre[0]}</div>
@@ -1852,8 +1918,8 @@ function AppInterno() {
                           <p className="stat-lbl">❤️ Likes</p>
                         </div>
                         <div className="stat-card">
-                          <p className="stat-val">{tokensComprados > 0 ? `+${tokensComprados}` : "300"}</p>
-                          <p className="stat-lbl">{tokensComprados > 0 ? "Extras" : "Días"}</p>
+                          <p className="stat-val">{diasRestantes(fechaBaseTienda(miTienda), DIAS_TIENDA)}</p>
+                          <p className="stat-lbl">Días restantes</p>
                         </div>
                       </div>
 
@@ -1895,7 +1961,7 @@ function AppInterno() {
                             </div>
                             <div className="prod-item-info">
                               <p className="prod-item-name">{p.nombre}</p>
-                              <p className="prod-item-meta">❤️ {p.likes || 0} likes · {p.cantidad} disponibles</p>
+                              <p className="prod-item-meta">❤️ {p.likes || 0} likes · {p.cantidad} disponibles · vence en {diasRestantes(p.created_at, DIAS_PRODUCTO)} días</p>
                             </div>
                             <p className="prod-item-price">S/ {p.precio}</p>
                           </div>
