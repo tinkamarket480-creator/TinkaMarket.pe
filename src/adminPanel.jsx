@@ -77,11 +77,20 @@ const CSS = `
   .admin-layout { display: flex; min-height: 100vh; }
 
   /* ── SIDEBAR ── */
+  /* FIX ESPACIO VACÍO (real): antes .sidebar tenía "height: 100vh" fijo,
+     así que SIEMPRE rellenaba toda la pantalla con el color --bg2,
+     sin importar cuánto contenido tuviera — de ahí el bloque vacío
+     visible bajo "Cerrar sesión". Con "max-height" en vez de "height",
+     el sidebar se ajusta a su contenido real: si es corto, termina ahí
+     y lo que se ve debajo es el fondo general de la página (--bg), casi
+     idéntico a --bg2, por lo que no se percibe ningún "hueco". Si el
+     contenido llega a ser más alto que la pantalla, se activa el scroll
+     interno gracias a max-height + overflow-y. */
   .sidebar {
     width: 240px; flex-shrink: 0; background: var(--bg2);
     border-right: 1px solid var(--border);
     display: flex; flex-direction: column;
-    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    position: sticky; top: 0; max-height: 100vh; overflow-y: auto;
   }
   .sidebar-head { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
   .sidebar-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
@@ -120,10 +129,7 @@ const CSS = `
     font-size: 10px; font-weight: 800; padding: 2px 7px;
     border-radius: 100px; font-family: var(--font-m);
   }
-  /* FIX ESPACIO VACÍO: "margin-top: auto" empuja el footer hasta el
-     fondo del sidebar sin necesidad de que .sidebar-nav tenga flex: 1,
-     así el hueco vacío desaparece y el footer queda anclado abajo. */
-  .sidebar-foot { padding: 16px 12px; border-top: 1px solid var(--border); margin-top: auto; }
+  .sidebar-foot { padding: 16px 12px; border-top: 1px solid var(--border); }
   .admin-info { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
   .admin-avatar {
     width: 36px; height: 36px; border-radius: 10px;
