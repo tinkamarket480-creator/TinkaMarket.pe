@@ -198,7 +198,6 @@ const CSS = `
   .badge-yellow { background: rgba(234,179,8,0.15);  color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
   .badge-blue   { background: rgba(59,130,246,0.15); color: var(--blue);   border: 1px solid rgba(59,130,246,0.3); }
   .badge-orange { background: rgba(232,101,26,0.15); color: var(--accent2);border: 1px solid rgba(232,101,26,0.3); }
-  /* FIX 2: badge-gold faltaba */
   .badge-gold   { background: rgba(212,160,23,0.15); color: var(--gold);   border: 1px solid rgba(212,160,23,0.3); }
 
   /* ── BOTONES ACCIÓN ── */
@@ -207,6 +206,7 @@ const CSS = `
     cursor: pointer; border: none; font-family: var(--font-b);
     transition: all 0.15s; margin-right: 5px; margin-bottom: 3px;
   }
+  .btn-action:disabled { opacity: 0.45; cursor: not-allowed; }
   .btn-ban  { background: rgba(239,68,68,0.15);  color: var(--red);    border: 1px solid rgba(239,68,68,0.3); }
   .btn-ban:hover  { background: rgba(239,68,68,0.3); }
   .btn-ok   { background: rgba(34,197,94,0.15);  color: var(--green);  border: 1px solid rgba(34,197,94,0.3); }
@@ -255,6 +255,7 @@ const CSS = `
     cursor: pointer; font-family: var(--font-b); transition: all 0.15s;
   }
   .btn-cancel:hover { border-color: var(--muted); color: var(--text); }
+  .btn-cancel:disabled { opacity: 0.45; cursor: not-allowed; }
 
   /* ── FINANZAS ── */
   .finance-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
@@ -315,6 +316,11 @@ const SECCIONES = [
   { id:"beneficios", icon:"🎁", label:"Beneficios" },
 ];
 
+// Mensaje estándar cuando una operación "tuvo éxito" pero RLS bloqueó
+// silenciosamente el cambio real (0 filas afectadas). Antes de este fix
+// el panel mostraba "eliminado ✅" aunque no se hubiera borrado nada.
+const MSG_SIN_PERMISO = "No se aplicó el cambio: sin permisos en la base de datos (revisa las políticas RLS) o el registro ya no existe.";
+
 export default function AdminPanel() {
   const [usuario,    setUsuario]    = useState(null);
   const [esAdmin,    setEsAdmin]    = useState(null); // null = cargando
@@ -340,6 +346,9 @@ export default function AdminPanel() {
   const modalRef = useRef(null);
   const syncModal = (val) => { modalRef.current = val; setModal(val); };
 
+  // Evita doble clic mientras una acción de escritura está en curso
+  const [accionEnCurso, setAccionEnCurso] = useState(false);
+
   // FIX 5: flag para evitar doble carga
   const adminCargado = useRef(false);
 
@@ -364,7 +373,9 @@ export default function AdminPanel() {
     if (adminCargado.current) return; // FIX 5: guard contra doble carga
     adminCargado.current = true;
     setUsuario(user);
-    const { data } = await supabase.from("admins").select("*").eq("email", user.email).single();
+    // maybeSingle() en vez de single(): evita un error 406 ruidoso en consola
+    // cuando el usuario NO es admin (0 filas es un caso válido, no un error).
+    const { data } = await supabase.from("admins").select("*").eq("email", user.email).maybeSingle();
     if (data) { setEsAdmin(true); cargarTodo(); }
     else { setEsAdmin(false); adminCargado.current = false; }
   }
@@ -408,51 +419,82 @@ export default function AdminPanel() {
 
   // ── ACCIONES TIENDAS ──────────────────────────────────────────────
   async function cambiarEstadoTienda(tienda, nuevoEstado) {
-    const { error } = await supabase.from("tiendas").update({ estado: nuevoEstado }).eq("id", tienda.id);
+    if (accionEnCurso) return;
+    setAccionEnCurso(true);
+    // .select() al final: hace que Supabase devuelva las filas realmente
+    // modificadas. Si RLS bloquea el UPDATE, data llega vacío (sin error),
+    // así detectamos el "éxito falso" que viste con el borrado de productos.
+    const { data, error } = await supabase
+      .from("tiendas")
+      .update({ estado: nuevoEstado })
+      .eq("id", tienda.id)
+      .select();
+    setAccionEnCurso(false);
     if (error) { showMsg("Error al cambiar estado: " + error.message, "err"); return; }
+    if (!data || data.length === 0) { showMsg(MSG_SIN_PERMISO, "err"); return; }
     showMsg(`Tienda "${tienda.nombre}" → ${nuevoEstado}`);
     cargarTodo();
   }
 
   async function renovarTienda(tienda) {
+    if (accionEnCurso) return;
+    setAccionEnCurso(true);
     // FIX 4: usar campo dedicado "renovado_at" para que el vendedor
     // calcule los días desde la renovación, no desde created_at.
     // El frontend debe priorizar renovado_at si existe.
     const ahora = new Date().toISOString();
-    const { error } = await supabase.from("tiendas").update({
+    const { data, error } = await supabase.from("tiendas").update({
       estado: "activa",
       renovado_at: ahora,   // campo nuevo: fecha base para contar los 300 días
-    }).eq("id", tienda.id);
-    if (error) { showMsg("Error al renovar: " + error.message, "err"); return; }
+    }).eq("id", tienda.id).select();
+    if (error) { setAccionEnCurso(false); showMsg("Error al renovar: " + error.message, "err"); return; }
+    if (!data || data.length === 0) { setAccionEnCurso(false); showMsg(MSG_SIN_PERMISO, "err"); return; }
     await supabase.from("beneficios").insert({
       tienda_id: tienda.id, tipo: "renovacion", valor: 300,
       otorgado_por: usuario.email,
     });
+    setAccionEnCurso(false);
     showMsg(`Tienda "${tienda.nombre}" renovada 300 días ✅`);
     cargarTodo(); syncModal(null);
   }
 
   async function ampliarProductos(tienda, cantidad) {
+    if (accionEnCurso) return;
+    setAccionEnCurso(true);
     const cant = parseInt(cantidad) || 5;
-    const { error } = await supabase.from("beneficios").insert({
+    // Sumar tokens_extra en la tienda directamente
+    const tokensActuales = tienda.tokens_extra || 0;
+    const { data, error } = await supabase
+      .from("tiendas")
+      .update({ tokens_extra: tokensActuales + cant })
+      .eq("id", tienda.id)
+      .select();
+    if (error) { setAccionEnCurso(false); showMsg("Error: " + error.message, "err"); return; }
+    if (!data || data.length === 0) { setAccionEnCurso(false); showMsg(MSG_SIN_PERMISO, "err"); return; }
+    await supabase.from("beneficios").insert({
       tienda_id: tienda.id, tipo: "productos_extra", valor: cant,
       otorgado_por: usuario.email,
     });
-    if (error) { showMsg("Error: " + error.message, "err"); return; }
-    // Sumar tokens_extra en la tienda directamente
-    const tokensActuales = tienda.tokens_extra || 0;
-    await supabase.from("tiendas").update({ tokens_extra: tokensActuales + cant }).eq("id", tienda.id);
+    setAccionEnCurso(false);
     showMsg(`+${cant} productos extra otorgados a "${tienda.nombre}" ✅`);
     cargarTodo(); syncModal(null);
   }
 
   async function verificarTienda(tienda) {
-    const { error } = await supabase.from("tiendas").update({ verificada: true }).eq("id", tienda.id);
-    if (error) { showMsg("Error: " + error.message, "err"); return; }
+    if (accionEnCurso) return;
+    setAccionEnCurso(true);
+    const { data, error } = await supabase
+      .from("tiendas")
+      .update({ verificada: true })
+      .eq("id", tienda.id)
+      .select();
+    if (error) { setAccionEnCurso(false); showMsg("Error: " + error.message, "err"); return; }
+    if (!data || data.length === 0) { setAccionEnCurso(false); showMsg(MSG_SIN_PERMISO, "err"); return; }
     await supabase.from("beneficios").insert({
       tienda_id: tienda.id, tipo: "verificacion", valor: 1,
       otorgado_por: usuario.email,
     });
+    setAccionEnCurso(false);
     showMsg(`Tienda "${tienda.nombre}" verificada ✅`);
     cargarTodo();
   }
@@ -461,6 +503,8 @@ export default function AdminPanel() {
   // form: { multa, motivo, hasta } — hasta es un string "YYYY-MM-DD" del <input type="date">,
   // vacío significa baneo permanente (sin fecha límite).
   async function banearUsuario(u, form) {
+    if (accionEnCurso) return;
+    setAccionEnCurso(true);
     const multa  = form?.multa  || "";
     const motivo = form?.motivo || "";
     const hasta  = form?.hasta  || "";
@@ -468,41 +512,47 @@ export default function AdminPanel() {
     // FIX 3: buscar tiendas por el auth_id del usuario (campo usuario_id en tiendas
     // corresponde al UUID de auth, no al id de la tabla usuarios).
     // Primero actualizamos el registro del usuario.
-    const { error: errU } = await supabase.from("usuarios").update({
+    const { data: dataU, error: errU } = await supabase.from("usuarios").update({
       baneado: true,
       multa_reactivacion: multa ? parseFloat(multa) : null,
       motivo_baneo: motivo || null,
       baneo_hasta: hasta ? new Date(hasta).toISOString() : null,
-    }).eq("id", u.id);
-    if (errU) { showMsg("Error al banear: " + errU.message, "err"); return; }
+    }).eq("id", u.id).select();
+    if (errU) { setAccionEnCurso(false); showMsg("Error al banear: " + errU.message, "err"); return; }
+    if (!dataU || dataU.length === 0) { setAccionEnCurso(false); showMsg(MSG_SIN_PERMISO, "err"); return; }
 
-    // Suspender tiendas usando el email como puente seguro
-    // (usuario.email → tiendas via tabla usuarios.email = tiendas.owner_email, o
-    //  si tiendas.usuario_id es el auth uuid, lo buscamos desde auth)
-    // Estrategia robusta: suspender por usuario_id usando el campo que guarda el auth uuid.
-    // En la inserción de tiendas se usa authUser.id (el UUID de supabase.auth).
-    // El campo u.id en tabla usuarios puede ser distinto; usamos u.email para localizar.
+    // Suspender tiendas usando el auth_uid como puente. OJO: si tu tabla
+    // "usuarios" todavía no tiene la columna auth_uid, este filtro caerá
+    // a u.id y puede no encontrar la tienda correcta (ver aviso aparte).
     const { data: tiendasUsuario } = await supabase
       .from("tiendas")
       .select("id")
-      .eq("usuario_id", u.auth_uid || u.id); // preferir auth_uid si existe
+      .eq("usuario_id", u.auth_uid || u.id);
 
     if (tiendasUsuario && tiendasUsuario.length > 0) {
       const ids = tiendasUsuario.map(t => t.id);
-      await supabase.from("tiendas").update({ estado: "suspendida" }).in("id", ids);
+      const { data: dataT } = await supabase.from("tiendas").update({ estado: "suspendida" }).in("id", ids).select();
+      if (!dataT || dataT.length === 0) {
+        console.warn("Aviso: el usuario quedó baneado pero sus tiendas no se pudieron suspender (revisa RLS o el vínculo usuario↔tienda).");
+      }
     }
 
+    setAccionEnCurso(false);
     showMsg(`Usuario ${u.nombre} baneado${multa ? ` (multa S/ ${multa})` : hasta ? " (temporal)" : " (permanente)"}`);
     cargarTodo(); syncModal(null);
   }
 
   async function desbanearUsuario(u) {
-    await supabase.from("usuarios").update({
+    if (accionEnCurso) return;
+    setAccionEnCurso(true);
+    const { data, error } = await supabase.from("usuarios").update({
       baneado: false,
       multa_reactivacion: null,
       motivo_baneo: null,
       baneo_hasta: null,
-    }).eq("id", u.id);
+    }).eq("id", u.id).select();
+    if (error) { setAccionEnCurso(false); showMsg("Error al desbanear: " + error.message, "err"); return; }
+    if (!data || data.length === 0) { setAccionEnCurso(false); showMsg(MSG_SIN_PERMISO, "err"); return; }
     // Reactivar sus tiendas
     const { data: tiendasUsuario } = await supabase
       .from("tiendas").select("id")
@@ -511,20 +561,37 @@ export default function AdminPanel() {
       const ids = tiendasUsuario.map(t => t.id);
       await supabase.from("tiendas").update({ estado: "activa" }).in("id", ids);
     }
+    setAccionEnCurso(false);
     showMsg(`Usuario ${u.nombre} desbaneado ✅`);
     cargarTodo();
   }
 
   // ── ACCIONES REPORTES ────────────────────────────────────────────
   async function marcarReporteRevisado(r) {
-    await supabase.from("reportes").update({ estado: "revisado" }).eq("id", r.id);
+    if (accionEnCurso) return;
+    setAccionEnCurso(true);
+    const { data, error } = await supabase.from("reportes").update({ estado: "revisado" }).eq("id", r.id).select();
+    setAccionEnCurso(false);
+    if (error) { showMsg("Error: " + error.message, "err"); return; }
+    if (!data || data.length === 0) { showMsg(MSG_SIN_PERMISO, "err"); return; }
     showMsg("Reporte marcado como revisado");
     cargarTodo();
   }
 
   async function eliminarProducto(p) {
-    const { error } = await supabase.from("productos").delete().eq("id", p.id);
+    if (accionEnCurso) return;
+    setAccionEnCurso(true);
+    // .select() es la clave: sin esto, un DELETE bloqueado por RLS
+    // devuelve { error: null, data: [] } y el panel mostraba "eliminado ✅"
+    // aunque el producto siguiera intacto en la base de datos.
+    const { data, error } = await supabase
+      .from("productos")
+      .delete()
+      .eq("id", p.id)
+      .select();
+    setAccionEnCurso(false);
     if (error) { showMsg("Error al eliminar: " + error.message, "err"); return; }
+    if (!data || data.length === 0) { showMsg(MSG_SIN_PERMISO, "err"); return; }
     showMsg(`Producto "${p.nombre}" eliminado`);
     cargarTodo();
   }
@@ -692,7 +759,7 @@ export default function AdminPanel() {
                     <span className="reporte-fecha">{fecha(r.created_at)}</span>
                   </div>
                   <p className="reporte-motivo">{r.motivo}</p>
-                  <button className="btn-action btn-ok" onClick={() => marcarReporteRevisado(r)}>✓ Marcar revisado</button>
+                  <button className="btn-action btn-ok" disabled={accionEnCurso} onClick={() => marcarReporteRevisado(r)}>✓ Marcar revisado</button>
                   <button className="btn-action btn-blue" onClick={() => setSeccion("reportes")}>Ver todos</button>
                 </div>
               ))}
@@ -715,7 +782,7 @@ export default function AdminPanel() {
                   <p className="reporte-motivo">{r.motivo}</p>
                   <p className="id-mono" style={{ marginBottom:10 }}>Reportado por ID: {r.reportado_por}</p>
                   {r.estado !== "revisado" && (
-                    <button className="btn-action btn-ok" onClick={() => marcarReporteRevisado(r)}>
+                    <button className="btn-action btn-ok" disabled={accionEnCurso} onClick={() => marcarReporteRevisado(r)}>
                       ✓ Marcar como revisado
                     </button>
                   )}
@@ -752,15 +819,15 @@ export default function AdminPanel() {
                           <td><span className="id-mono">{fecha(t.created_at)}</span></td>
                           <td>
                             {t.estado === "activa"
-                              ? <button className="btn-action btn-ban" onClick={() => cambiarEstadoTienda(t, "suspendida")}>🚫 Suspender</button>
-                              : <button className="btn-action btn-ok"  onClick={() => cambiarEstadoTienda(t, "activa")}>✓ Activar</button>
+                              ? <button className="btn-action btn-ban" disabled={accionEnCurso} onClick={() => { if (window.confirm(`¿Suspender la tienda "${t.nombre}"? Dejará de ser visible para compradores.`)) cambiarEstadoTienda(t, "suspendida"); }}>🚫 Suspender</button>
+                              : <button className="btn-action btn-ok"  disabled={accionEnCurso} onClick={() => cambiarEstadoTienda(t, "activa")}>✓ Activar</button>
                             }
-                            <button className="btn-action btn-blue" onClick={() => cambiarEstadoTienda(t, "revision")}>👁 Revisión</button>
+                            <button className="btn-action btn-blue" disabled={accionEnCurso} onClick={() => cambiarEstadoTienda(t, "revision")}>👁 Revisión</button>
                             {!t.verificada && (
-                              <button className="btn-action btn-gold" onClick={() => verificarTienda(t)}>✓ Verificar</button>
+                              <button className="btn-action btn-gold" disabled={accionEnCurso} onClick={() => verificarTienda(t)}>✓ Verificar</button>
                             )}
-                            <button className="btn-action btn-ok" onClick={() => { syncModal({ tipo:"renovar", data:t }); setModalForm({}); }}>↻ Renovar</button>
-                            <button className="btn-action btn-gold" onClick={() => { syncModal({ tipo:"productos", data:t }); setModalForm({ cantidad:"5" }); }}>🎁 + Productos</button>
+                            <button className="btn-action btn-ok" disabled={accionEnCurso} onClick={() => { syncModal({ tipo:"renovar", data:t }); setModalForm({}); }}>↻ Renovar</button>
+                            <button className="btn-action btn-gold" disabled={accionEnCurso} onClick={() => { syncModal({ tipo:"productos", data:t }); setModalForm({ cantidad:"5" }); }}>🎁 + Productos</button>
                           </td>
                         </tr>
                       ))}
@@ -809,8 +876,8 @@ export default function AdminPanel() {
                           </td>
                           <td>
                             {u.baneado
-                              ? <button className="btn-action btn-ok"  onClick={() => desbanearUsuario(u)}>✓ Desbanear</button>
-                              : <button className="btn-action btn-ban" onClick={() => { syncModal({ tipo:"banear", data:u }); setModalForm({ multa:"", motivo:"", hasta:"" }); }}>🚫 Banear</button>
+                              ? <button className="btn-action btn-ok"  disabled={accionEnCurso} onClick={() => desbanearUsuario(u)}>✓ Desbanear</button>
+                              : <button className="btn-action btn-ban" disabled={accionEnCurso} onClick={() => { syncModal({ tipo:"banear", data:u }); setModalForm({ multa:"", motivo:"", hasta:"" }); }}>🚫 Banear</button>
                             }
                           </td>
                         </tr>
@@ -853,7 +920,11 @@ export default function AdminPanel() {
                           <td><span className="badge badge-blue">{p.categoria}</span></td>
                           <td>❤️ {p.likes}</td>
                           <td>
-                            <button className="btn-action btn-ban" onClick={() => eliminarProducto(p)}>🗑 Eliminar</button>
+                            <button
+                              className="btn-action btn-ban"
+                              disabled={accionEnCurso}
+                              onClick={() => { if (window.confirm(`¿Eliminar el producto "${p.nombre}"? Esta acción no se puede deshacer.`)) eliminarProducto(p); }}
+                            >🗑 Eliminar</button>
                           </td>
                         </tr>
                       ))}
@@ -925,7 +996,6 @@ export default function AdminPanel() {
                   <tbody>
                     {beneficios.map(b => (
                       <tr key={b.id}>
-                        {/* FIX 2: badge-gold ahora existe en CSS */}
                         <td><span className={`badge ${b.tipo === "renovacion" ? "badge-green" : b.tipo === "verificacion" ? "badge-blue" : "badge-gold"}`}>{b.tipo}</span></td>
                         <td><span className="id-mono">{b.tienda_id?.slice(0, 12)}…</span></td>
                         <td style={{ fontWeight:700 }}>
@@ -958,8 +1028,10 @@ export default function AdminPanel() {
                 El contador de días se reiniciará desde hoy. Esta acción queda registrada.
               </p>
               <div className="modal-actions">
-                <button className="btn-cancel" onClick={() => syncModal(null)}>Cancelar</button>
-                <button className="btn-primary-dark" onClick={() => renovarTienda(modal.data)}>Confirmar renovación</button>
+                <button className="btn-cancel" disabled={accionEnCurso} onClick={() => syncModal(null)}>Cancelar</button>
+                <button className="btn-primary-dark" disabled={accionEnCurso} onClick={() => renovarTienda(modal.data)}>
+                  {accionEnCurso ? "Procesando..." : "Confirmar renovación"}
+                </button>
               </div>
             </>}
 
@@ -975,9 +1047,9 @@ export default function AdminPanel() {
                 value={modalForm.cantidad || ""}
                 onChange={e => setModalForm({ cantidad: e.target.value })} />
               <div className="modal-actions">
-                <button className="btn-cancel" onClick={() => syncModal(null)}>Cancelar</button>
-                <button className="btn-primary-dark" onClick={() => ampliarProductos(modal.data, modalForm.cantidad || 5)}>
-                  Otorgar {modalForm.cantidad || 5} producto{(parseInt(modalForm.cantidad) || 5) !== 1 ? "s" : ""}
+                <button className="btn-cancel" disabled={accionEnCurso} onClick={() => syncModal(null)}>Cancelar</button>
+                <button className="btn-primary-dark" disabled={accionEnCurso} onClick={() => ampliarProductos(modal.data, modalForm.cantidad || 5)}>
+                  {accionEnCurso ? "Procesando..." : `Otorgar ${modalForm.cantidad || 5} producto${(parseInt(modalForm.cantidad) || 5) !== 1 ? "s" : ""}`}
                 </button>
               </div>
             </>}
@@ -1009,10 +1081,10 @@ export default function AdminPanel() {
                 onChange={e => setModalForm({ ...modalForm, multa: e.target.value })} />
 
               <div className="modal-actions">
-                <button className="btn-cancel" onClick={() => syncModal(null)}>Cancelar</button>
-                <button className="btn-primary-dark" style={{ background:"linear-gradient(135deg,#7B0000,#EF4444)" }}
+                <button className="btn-cancel" disabled={accionEnCurso} onClick={() => syncModal(null)}>Cancelar</button>
+                <button className="btn-primary-dark" disabled={accionEnCurso} style={{ background:"linear-gradient(135deg,#7B0000,#EF4444)" }}
                   onClick={() => banearUsuario(modal.data, modalForm)}>
-                  Confirmar baneo
+                  {accionEnCurso ? "Procesando..." : "Confirmar baneo"}
                 </button>
               </div>
             </>}
