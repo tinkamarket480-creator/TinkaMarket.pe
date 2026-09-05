@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, Component } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./supabase";
 
 // ─── Paleta & fuentes ───────────────────────────────────────────────
@@ -776,6 +777,58 @@ const CATS_INFO = [
   { nombre:"Otros",           desc:"Variedad de productos locales", bg:"linear-gradient(135deg,#6B3FA0,#4A2070)", icon:"✨" },
 ];
 
+// ─── Rutas (react-router) ───────────────────────────────────────────
+// Cada categoría tiene un slug de URL amigable en español simple.
+const CAT_SLUGS = {
+  "Procesados": "procesados",
+  "Materias primas": "materias_primas",
+  "Plantas y flores": "plantas",
+  "Artesanales": "artesanales",
+  "Otros": "otros",
+};
+const SLUG_A_CAT = Object.fromEntries(Object.entries(CAT_SLUGS).map(([k, v]) => [v, k]));
+
+// Convierte el identificador interno de pantalla ("inicio", "categoria_Otros",
+// "tienda_abc123"...) que ya usa toda la app, en una URL real.
+function pantallaAPath(p) {
+  if (p === "inicio") return "/";
+  if (p === "busqueda") return "/busqueda";
+  if (p === "carrito") return "/carrito";
+  if (p === "miperfil") return "/perfil";
+  if (p === "mitienda") return "/mi_tienda";
+  if (p === "soporte") return "/soporte";
+  if (p === "politicas") return "/politicas";
+  if (p === "comovender") return "/como-vender";
+  if (p === "login") return "/login";
+  if (p.startsWith("categoria_")) {
+    const nombre = p.replace("categoria_", "");
+    return "/" + (CAT_SLUGS[nombre] || "categoria");
+  }
+  if (p.startsWith("tienda_")) {
+    return "/tienda/" + p.replace("tienda_", "");
+  }
+  return "/";
+}
+
+// Convierte la URL actual en el identificador interno de pantalla.
+function pathAPantalla(pathname) {
+  const limpio = (pathname.replace(/\/+$/, "") || "/");
+  if (limpio === "/") return "inicio";
+  if (limpio === "/busqueda") return "busqueda";
+  if (limpio === "/carrito") return "carrito";
+  if (limpio === "/perfil") return "miperfil";
+  if (limpio === "/mi_tienda") return "mitienda";
+  if (limpio === "/soporte") return "soporte";
+  if (limpio === "/politicas") return "politicas";
+  if (limpio === "/como-vender") return "comovender";
+  if (limpio === "/login") return "login";
+  const slug = limpio.replace("/", "");
+  if (SLUG_A_CAT[slug]) return "categoria_" + SLUG_A_CAT[slug];
+  const mTienda = limpio.match(/^\/tienda\/(.+)$/);
+  if (mTienda) return "tienda_" + mTienda[1];
+  return "inicio";
+}
+
 // ─── Duración de tiendas y productos ───────────────────────────────────
 // Tiendas: 300 días. Productos: 30 días.
 // Para tiendas se usa "renovado_at" si existe (se actualiza cuando el
@@ -1013,7 +1066,9 @@ function ProdImgViewer({ fotos, fallbackIcon = "📦" }) {
 // ─── Componente principal ─────────────────────────────────────────────
 function AppInterno() {
   useSuprimirErrorDOMBenigno();
-  const [pantalla, setPantalla] = useState("inicio");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const pantalla = pathAPantalla(location.pathname);
   const [usuario, setUsuario] = useState(null);
   const [perfilDB, setPerfilDB] = useState(null);
   const [baneado, setBaneado] = useState(null); // objeto usuario baneado (o null)
@@ -1058,6 +1113,25 @@ function AppInterno() {
     cargarProductos();
     cargarTiendas();
   }, []);
+
+  // Si el usuario entra directo a la URL de una categoría (o recarga la
+  // página estando en una), cargamos los productos de esa categoría.
+  useEffect(() => {
+    if (pantalla.startsWith("categoria_")) {
+      cargarProductos(pantalla.replace("categoria_", ""));
+    } else if (pantalla === "inicio") {
+      cargarProductos();
+    }
+  }, [pantalla]);
+
+  // Ruta dedicada /login: si alguien entra directo a esta URL, inicia el
+  // flujo de Google automáticamente (o lo manda a inicio si ya inició sesión).
+  useEffect(() => {
+    if (pantalla === "login") {
+      if (usuario) ir("inicio");
+      else login();
+    }
+  }, [pantalla, usuario]);
 
   // Precarga la imagen del hero en segundo plano. Cuando termina de
   // cargar (o falla), activa la clase que hace que el degradado del
@@ -1157,7 +1231,7 @@ function AppInterno() {
     const [{ data:p }, { data:t }] = await Promise.all([qP, qT]);
     setProductos((p || []).filter(x => !estaVencido(x.created_at, DIAS_PRODUCTO)));
     setTiendas((t || []).filter(x => !estaVencido(fechaBaseTienda(x), DIAS_TIENDA)));
-    setPantalla("busqueda");
+    ir("busqueda");
   }
 
   async function login() {
@@ -1169,7 +1243,7 @@ function AppInterno() {
     setUsuario(null); setPerfilDB(null); setMiTienda(null);
     setCarrito([]); setTiendaCarrito(null); setMostrarPerfil(false);
     setBaneado(null);
-    setPantalla("inicio"); setMenuOpen(false);
+    navigate("/"); setMenuOpen(false);
   }
 
   async function crearTienda() {
@@ -1379,7 +1453,7 @@ function AppInterno() {
     });
   }
 
-  const ir = (p) => { setPantalla(p); setMenuOpen(false); setMsg(""); window.scrollTo(0,0); };
+  const ir = (p) => { navigate(pantallaAPath(p)); setMenuOpen(false); setMsg(""); window.scrollTo(0,0); };
 
   // Navega al perfil de una tienda: si es la tienda del usuario que está
   // navegando, lo lleva directo a "Mi tienda" (panel de gestión) en vez
@@ -1388,9 +1462,7 @@ function AppInterno() {
     if (miTienda && t.id === miTienda.id) {
       ir("mitienda");
     } else {
-      setPantalla("tienda_" + t.id);
-      setMenuOpen(false);
-      window.scrollTo(0, 0);
+      ir("tienda_" + t.id);
     }
   }
 
@@ -2021,6 +2093,16 @@ function AppInterno() {
                 })()
           }
         </>}
+
+        {/* ── LOGIN (ruta dedicada) ── */}
+        {pantalla === "login" && (
+          <div className="empty">
+            <div className="empty-icon">🔑</div>
+            <p className="empty-txt">
+              {usuario ? "Ya iniciaste sesión, redirigiendo..." : "Conectando con Google..."}
+            </p>
+          </div>
+        )}
 
         {/* ── SOPORTE ── */}
         {pantalla === "soporte" && <>
