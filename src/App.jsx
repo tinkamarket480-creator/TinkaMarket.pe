@@ -759,6 +759,26 @@ const CSS = `
   }
   .ban-row b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 3px; font-weight: 800; }
 
+  /* ── VUELO AL CARRITO ──────────────────────────────────────────
+     Elemento flotante (avión ✈️) que "vuela" desde la foto del
+     producto agregado hasta el ícono del carrito en la barra de
+     navegación, como confirmación visual de la compra. */
+  .vuelo-item {
+    position: fixed;
+    z-index: 500;
+    font-size: 30px;
+    line-height: 1;
+    pointer-events: none;
+    animation: vueloAvion 0.85s cubic-bezier(.32,.04,.6,1) forwards;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));
+    will-change: transform, opacity;
+  }
+  @keyframes vueloAvion {
+    0%   { transform: translate(0,0) scale(0.5) rotate(-15deg); opacity: 0; }
+    14%  { opacity: 1; transform: translate(calc(var(--dx) * 0.1), calc(var(--dy) * 0.1 - 24px)) scale(1.05) rotate(-6deg); }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0.25) rotate(18deg); opacity: 0; }
+  }
+
   @media (max-width: 600px) {
     .nav { padding: 0 12px; gap: 10px; }
     .nav-brand { display: none; }
@@ -778,7 +798,6 @@ const CATS_INFO = [
 ];
 
 // ─── Rutas (react-router) ───────────────────────────────────────────
-// Cada categoría tiene un slug de URL amigable en español simple.
 const CAT_SLUGS = {
   "Procesados": "procesados",
   "Materias primas": "materias_primas",
@@ -788,8 +807,6 @@ const CAT_SLUGS = {
 };
 const SLUG_A_CAT = Object.fromEntries(Object.entries(CAT_SLUGS).map(([k, v]) => [v, k]));
 
-// Convierte el identificador interno de pantalla ("inicio", "categoria_Otros",
-// "tienda_abc123"...) que ya usa toda la app, en una URL real.
 function pantallaAPath(p) {
   if (p === "inicio") return "/";
   if (p === "busqueda") return "/busqueda";
@@ -810,7 +827,6 @@ function pantallaAPath(p) {
   return "/";
 }
 
-// Convierte la URL actual en el identificador interno de pantalla.
 function pathAPantalla(pathname) {
   const limpio = (pathname.replace(/\/+$/, "") || "/");
   if (limpio === "/") return "inicio";
@@ -829,10 +845,6 @@ function pathAPantalla(pathname) {
   return "inicio";
 }
 
-// ─── Duración de tiendas y productos ───────────────────────────────────
-// Tiendas: 300 días. Productos: 30 días.
-// Para tiendas se usa "renovado_at" si existe (se actualiza cuando el
-// panel admin renueva la tienda); si no existe, se usa "created_at".
 const DIAS_TIENDA = 300;
 const DIAS_PRODUCTO = 30;
 
@@ -876,7 +888,6 @@ const UBIGEO = {
   "Ucayali":{"Coronel Portillo":["Callería","Campoverde","Iparia","Masisea","Yarinacocha","Nueva Requena","Manantay"],"Padre Abad":["Padre Abad","Irazola","Curimaná","Neshuya","Alexander Von Humboldt"],"Atalaya":["Raymondi","Sepahua","Tahuania","Yurúa"],"Purús":["Purús"]},
 };
 
-// ─── Culqi helpers ────────────────────────────────────────────────────
 function abrirPagoCulqi({ monto, descripcion, email, onSuccess }) {
   if (typeof window.Culqi === "undefined") {
     alert("Culqi no está disponible en este momento. Por favor intente más tarde.");
@@ -900,7 +911,6 @@ function abrirPagoCulqi({ monto, descripcion, email, onSuccess }) {
   };
 }
 
-// ─── Sonidos ──────────────────────────────────────────────────────────
 function playSound(type) {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -963,11 +973,6 @@ function playSound(type) {
   }
 }
 
-// ─── Error Boundary ─────────────────────────────────────────────────
-// Atrapa errores de render inesperados (por ejemplo, conflictos de
-// reconciliación del DOM) para evitar que la app se quede en pantalla
-// en blanco. Si algo falla, muestra un aviso simple con botón de recarga
-// en vez de crashear toda la aplicación.
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -1008,11 +1013,6 @@ class ErrorBoundary extends Component {
   }
 }
 
-// Suprime el error específico "NotFoundError: Failed to execute 'removeChild'"
-// que puede ocurrir por condiciones de carrera entre React y el navegador al
-// remover nodos del DOM. Es un error conocido y generalmente inofensivo (el
-// estado de la app sigue siendo correcto); sin esto, puede quedar como
-// "Uncaught" y en algunos navegadores interrumpir la actualización visual.
 function useSuprimirErrorDOMBenigno() {
   useEffect(() => {
     const handler = (event) => {
@@ -1031,7 +1031,6 @@ function useSuprimirErrorDOMBenigno() {
   }, []);
 }
 
-// ─── Sub-componente: imagen de producto con galería ───────────────────
 function ProdImgViewer({ fotos, fallbackIcon = "📦" }) {
   const [idx, setIdx] = useState(0);
   if (!fotos || fotos.length === 0) {
@@ -1063,7 +1062,6 @@ function ProdImgViewer({ fotos, fallbackIcon = "📦" }) {
   );
 }
 
-// ─── Componente principal ─────────────────────────────────────────────
 function AppInterno() {
   useSuprimirErrorDOMBenigno();
   const navigate = useNavigate();
@@ -1071,7 +1069,7 @@ function AppInterno() {
   const pantalla = pathAPantalla(location.pathname);
   const [usuario, setUsuario] = useState(null);
   const [perfilDB, setPerfilDB] = useState(null);
-  const [baneado, setBaneado] = useState(null); // objeto usuario baneado (o null)
+  const [baneado, setBaneado] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [filtroCat, setFiltroCat] = useState("Todos");
@@ -1101,6 +1099,12 @@ function AppInterno() {
   const [msg, setMsg] = useState("");
   const [guardando, setGuardando] = useState(false);
   const carruselRef = useRef(null);
+  const carritoNavRef = useRef(null);
+  const panelImgRef = useRef(null);
+  const [vuelos, setVuelos] = useState([]);
+  // Guarda los timeout IDs de las animaciones de "vuelo" en curso para
+  // poder limpiarlos si el componente se desmonta antes de que terminen.
+  const vueloTimeoutsRef = useRef([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1114,8 +1118,14 @@ function AppInterno() {
     cargarTiendas();
   }, []);
 
-  // Si el usuario entra directo a la URL de una categoría (o recarga la
-  // página estando en una), cargamos los productos de esa categoría.
+  // Limpieza de los timeouts de la animación de vuelo al desmontar.
+  useEffect(() => {
+    return () => {
+      vueloTimeoutsRef.current.forEach(id => clearTimeout(id));
+      vueloTimeoutsRef.current = [];
+    };
+  }, []);
+
   useEffect(() => {
     if (pantalla.startsWith("categoria_")) {
       cargarProductos(pantalla.replace("categoria_", ""));
@@ -1124,8 +1134,6 @@ function AppInterno() {
     }
   }, [pantalla]);
 
-  // Ruta dedicada /login: si alguien entra directo a esta URL, inicia el
-  // flujo de Google automáticamente (o lo manda a inicio si ya inició sesión).
   useEffect(() => {
     if (pantalla === "login") {
       if (usuario) ir("inicio");
@@ -1133,9 +1141,6 @@ function AppInterno() {
     }
   }, [pantalla, usuario]);
 
-  // Precarga la imagen del hero en segundo plano. Cuando termina de
-  // cargar (o falla), activa la clase que hace que el degradado del
-  // hero se vuelva más transparente y deje ver la foto de fondo.
   useEffect(() => {
     const img = new Image();
     img.onload = () => setHeroLoaded(true);
@@ -1147,8 +1152,6 @@ function AppInterno() {
     setUsuario(user);
     const { data: perfil } = await supabase.from("usuarios").select("*").eq("email", user.email).single();
 
-    // Si el usuario está baneado, se bloquea el acceso al resto de la app
-    // hasta que se desbanee (o mientras el bloqueo esté vigente).
     if (perfil?.baneado) {
       setPerfilDB(perfil);
       setBaneado(perfil);
@@ -1174,8 +1177,10 @@ function AppInterno() {
 
   async function guardarPerfil() {
     if (!perfilForm.nombre || !perfilForm.apellido || !perfilForm.departamento || !perfilForm.provincia || !perfilForm.distrito) {
+      playSound("error");
       setMsg("Completa todos los campos."); return;
     }
+    playSound("click");
     setGuardando(true);
     const { count } = await supabase.from("usuarios").select("*", { count:"exact", head:true });
     const nuevoId = String((count || 0) + 1).padStart(9, "0");
@@ -1189,8 +1194,6 @@ function AppInterno() {
     setGuardando(false);
   }
 
-  // Trae solo productos cuya tienda esté "activa" o "revision", y cuyo
-  // plazo de 30 días de publicación no haya vencido.
   async function cargarProductos(cat = null) {
     let q = supabase
       .from("productos")
@@ -1203,10 +1206,6 @@ function AppInterno() {
     setProductos((data || []).filter(p => !estaVencido(p.created_at, DIAS_PRODUCTO)));
   }
 
-  // Incluye "revision" además de "activa" para que las tiendas en
-  // revisión también aparezcan (se distinguen con el badge 👁️ en su perfil),
-  // y filtra las que ya superaron los 300 días desde su creación o última
-  // renovación (renovado_at).
   async function cargarTiendas() {
     const { data } = await supabase.from("tiendas").select("*").in("estado", ["activa", "revision"]);
     setTiendas((data || []).filter(t => !estaVencido(fechaBaseTienda(t), DIAS_TIENDA)));
@@ -1218,6 +1217,7 @@ function AppInterno() {
   }
 
   async function buscar() {
+    playSound("click");
     if (!busqueda.trim()) return;
     const cat = filtroCat === "Todos" ? null : filtroCat;
     let qP = supabase
@@ -1235,10 +1235,12 @@ function AppInterno() {
   }
 
   async function login() {
+    playSound("click");
     await supabase.auth.signInWithOAuth({ provider:"google", options:{ redirectTo: window.location.origin } });
   }
 
   async function logout() {
+    playSound("close");
     await supabase.auth.signOut();
     setUsuario(null); setPerfilDB(null); setMiTienda(null);
     setCarrito([]); setTiendaCarrito(null); setMostrarPerfil(false);
@@ -1275,8 +1277,6 @@ function AppInterno() {
   }
 
   async function publicarProducto() {
-    // Bloqueo defensivo: si la tienda está suspendida no debe poder publicar
-    // (además de que el formulario ya está oculto en la UI en modo solo-lectura).
     if (miTienda?.estado === "suspendida") {
       playSound("error");
       setMsg("Tu tienda está suspendida. No puedes publicar productos mientras dure la suspensión.");
@@ -1333,9 +1333,6 @@ function AppInterno() {
     }
   }
 
-  // Busca la tienda de un producto: primero en lo que ya tenemos cargado en memoria,
-  // y si no está ahí (por ejemplo tras una búsqueda que filtró la lista de tiendas),
-  // la trae directamente de la base de datos para no fallar en silencio.
   async function obtenerTienda(tiendaId) {
     const enCache = tiendas.find(x => x.id === tiendaId);
     if (enCache) return enCache;
@@ -1358,11 +1355,10 @@ function AppInterno() {
   }
 
   function vaciarYAgregar(prod, tienda, cantidad = 1) {
+    playSound("click");
     setCarrito([{ ...prod, cantidadCarrito: cantidad }]); setTiendaCarrito(tienda); setModalVaciar(null);
   }
 
-  // Cambia la cantidad de un producto ya en el carrito. Si la nueva
-  // cantidad llega a 0 (o menos), el producto se elimina del carrito.
   function actualizarCantidadCarrito(prodId, nuevaCantidad) {
     if (nuevaCantidad <= 0) { eliminarDelCarrito(prodId); return; }
     playSound("click");
@@ -1371,8 +1367,6 @@ function AppInterno() {
     ));
   }
 
-  // Elimina un producto del carrito. Si era el último, también se
-  // limpia la tienda asociada al carrito para permitir comprar en otra.
   function eliminarDelCarrito(prodId) {
     playSound("close");
     setCarrito(c => {
@@ -1382,7 +1376,6 @@ function AppInterno() {
     });
   }
 
-  // Abre el panel de "agregar al carrito" con foto, nombre, descripción y selector de cantidad.
   function abrirPanelCarrito(prod) {
     if (!usuario) { login(); return; }
     playSound("open");
@@ -1393,6 +1386,28 @@ function AppInterno() {
   function cerrarPanelCarrito() {
     playSound("close");
     setPanelProducto(null);
+  }
+
+  // Lanza una pequeña animación de "avión" que vuela desde la imagen del
+  // producto (en el panel de agregar al carrito) hasta el ícono del
+  // carrito en la barra de navegación, como confirmación visual.
+  function lanzarVueloCarrito() {
+    const origenEl = panelImgRef.current;
+    const destinoEl = carritoNavRef.current;
+    if (!origenEl || !destinoEl) return;
+    const r1 = origenEl.getBoundingClientRect();
+    const r2 = destinoEl.getBoundingClientRect();
+    const startX = r1.left + r1.width / 2 - 15;
+    const startY = r1.top + r1.height / 2 - 15;
+    const dx = (r2.left + r2.width / 2) - startX - 15;
+    const dy = (r2.top + r2.height / 2) - startY - 15;
+    const id = Date.now() + Math.random();
+    setVuelos(v => [...v, { id, startX, startY, dx, dy }]);
+    const timeoutId = setTimeout(() => {
+      setVuelos(v => v.filter(x => x.id !== id));
+      vueloTimeoutsRef.current = vueloTimeoutsRef.current.filter(t => t !== timeoutId);
+    }, 900);
+    vueloTimeoutsRef.current.push(timeoutId);
   }
 
   async function confirmarAgregarCarrito() {
@@ -1407,11 +1422,13 @@ function AppInterno() {
     }
     agregarCarrito(panelProducto, t, panelCantidad);
     playSound("success");
+    lanzarVueloCarrito();
     setAgregandoPanel(false);
     setPanelProducto(null);
   }
 
   async function verWhatsApp(tienda) {
+    playSound("click");
     if (!usuario) { login(); return; }
     if (perfilDB?.id) await supabase.from("vistas_whatsapp").insert({ tienda_id: tienda.id, comprador_id: perfilDB.id });
     window.open(`https://wa.me/51${tienda.whatsapp}`, "_blank");
@@ -1419,6 +1436,7 @@ function AppInterno() {
 
   async function comprarWhatsApp() {
     if (!tiendaCarrito || !usuario) return;
+    playSound("click");
     if (perfilDB?.id) await supabase.from("vistas_whatsapp").insert({ tienda_id: tiendaCarrito.id, comprador_id: perfilDB.id });
     const lista = carrito.map(p => `- ${p.nombre} x${p.cantidadCarrito}: S/ ${(parseFloat(p.precio) * p.cantidadCarrito).toFixed(2)}`).join("\n");
     const total = carrito.reduce((s, p) => s + parseFloat(p.precio) * p.cantidadCarrito, 0);
@@ -1430,7 +1448,8 @@ function AppInterno() {
 
   async function enviarReporte() {
     if (!usuario) { login(); return; }
-    if (!reporteForm.detalle) { setMsg("Describe el problema."); return; }
+    if (!reporteForm.detalle) { playSound("error"); setMsg("Describe el problema."); return; }
+    playSound("click");
     setGuardando(true);
     await supabase.from("reportes").insert({
       reportado_por: perfilDB?.id || usuario.id, tipo: reporteForm.tipo,
@@ -1453,11 +1472,8 @@ function AppInterno() {
     });
   }
 
-  const ir = (p) => { navigate(pantallaAPath(p)); setMenuOpen(false); setMsg(""); window.scrollTo(0,0); };
+  const ir = (p) => { playSound("click"); navigate(pantallaAPath(p)); setMenuOpen(false); setMsg(""); window.scrollTo(0,0); };
 
-  // Navega al perfil de una tienda: si es la tienda del usuario que está
-  // navegando, lo lleva directo a "Mi tienda" (panel de gestión) en vez
-  // del perfil público de solo lectura/WhatsApp.
   function irATienda(t) {
     if (miTienda && t.id === miTienda.id) {
       ir("mitienda");
@@ -1472,14 +1488,12 @@ function AppInterno() {
   const provsPerfilDisp = perfilForm.departamento ? Object.keys(UBIGEO[perfilForm.departamento] || {}).sort() : [];
   const distPerfilDisp = (perfilForm.departamento && perfilForm.provincia) ? (UBIGEO[perfilForm.departamento]?.[perfilForm.provincia] || []).sort() : [];
 
-  // ── Helper: primera foto de producto ──────────────────────────────
   const firstFoto = (p) => p.fotos && p.fotos.length > 0 ? p.fotos[0] : null;
 
   const fechaBan = (d) => d
     ? new Date(d).toLocaleDateString("es-PE", { day:"2-digit", month:"long", year:"numeric" })
     : "—";
 
-  // ── OVERLAY DE CUENTA BANEADA ──────────────────────────────────────
   if (baneado) return (
     <div className="ban-overlay">
       <style>{CSS}</style>
@@ -1508,7 +1522,6 @@ function AppInterno() {
     </div>
   );
 
-  // ── MODAL PERFIL ─────────────────────────────────────────────────
   if (mostrarPerfil && usuario) return (
     <div className="perfil-modal">
       <style>{CSS}</style>
@@ -1539,12 +1552,10 @@ function AppInterno() {
     </div>
   );
 
-  // ── APP PRINCIPAL ─────────────────────────────────────────────────
   return (
     <div style={{ fontFamily:"var(--font-body)", minHeight:"100vh", background:"var(--crema)", width:"100%", overflowX:"hidden" }}>
       <style>{CSS}</style>
 
-      {/* NAVBAR */}
       <nav className="nav">
         <div className="nav-logo" onClick={() => { ir("inicio"); cargarProductos(); cargarTiendas(); setBusqueda(""); }}>
           <img src="/logo.png" alt="TinkaMarket" className="nav-logo-img" onError={e => e.target.style.display="none"} />
@@ -1557,14 +1568,13 @@ function AppInterno() {
         </div>
         <div className="nav-actions">
           {usuario
-            ? <button className="nav-btn" onClick={() => ir("carrito")}>🛒{carrito.length > 0 ? ` ${carrito.reduce((s,p)=>s+p.cantidadCarrito,0)}` : ""}</button>
+            ? <button ref={carritoNavRef} className="nav-btn" onClick={() => ir("carrito")}>🛒{carrito.length > 0 ? ` ${carrito.reduce((s,p)=>s+p.cantidadCarrito,0)}` : ""}</button>
             : <button className="nav-btn" onClick={login}>Iniciar sesión</button>
           }
-          <button className="nav-btn" style={{ padding:"7px 12px" }} onClick={() => setMenuOpen(true)}>☰</button>
+          <button className="nav-btn" style={{ padding:"7px 12px" }} onClick={() => { playSound("open"); setMenuOpen(true); }}>☰</button>
         </div>
       </nav>
 
-      {/* HERO */}
       {pantalla === "inicio" && (
         <div className="hero">
           <div className={`hero-gradient${heroLoaded ? " hero-loaded" : ""}`} />
@@ -1595,10 +1605,8 @@ function AppInterno() {
         </div>
       )}
 
-      {/* PÁGINAS */}
       <div className="page">
 
-        {/* ── INICIO ── */}
         {pantalla === "inicio" && <>
           <p className="sec-title">Explora por categoría</p>
           <div className="grid grid-cat">
@@ -1660,7 +1668,6 @@ function AppInterno() {
           }
         </>}
 
-        {/* ── CATEGORÍA ── */}
         {pantalla.startsWith("categoria_") && (() => {
           const catNom = pantalla.replace("categoria_","");
           const info = CATS_INFO.find(c => c.nombre === catNom);
@@ -1698,14 +1705,9 @@ function AppInterno() {
           </>;
         })()}
 
-        {/* ── PERFIL TIENDA (vista pública) ── */}
         {pantalla.startsWith("tienda_") && (() => {
           const tid = pantalla.replace("tienda_","");
 
-          // Si de alguna forma se llega aquí siendo la propia tienda del
-          // usuario (por ejemplo un estado antiguo o un enlace directo),
-          // redirige al panel de gestión "Mi tienda" en vez de mostrar
-          // la vista pública de solo lectura.
           if (miTienda && tid === miTienda.id) {
             setTimeout(() => ir("mitienda"), 0);
             return null;
@@ -1757,7 +1759,6 @@ function AppInterno() {
           </>;
         })()}
 
-        {/* ── BÚSQUEDA ── */}
         {pantalla === "busqueda" && <>
           <div className="back-row">
             <button className="btn-back" onClick={() => { ir("inicio"); cargarProductos(); cargarTiendas(); setBusqueda(""); }}>←</button>
@@ -1802,7 +1803,6 @@ function AppInterno() {
           }
         </>}
 
-        {/* ── CARRITO ── */}
         {pantalla === "carrito" && <>
           <div className="back-row">
             <button className="btn-back" onClick={() => ir("inicio")}>←</button>
@@ -1867,7 +1867,6 @@ function AppInterno() {
           }
         </>}
 
-        {/* ── MI PERFIL ── */}
         {pantalla === "miperfil" && <>
           <div className="back-row">
             <button className="btn-back" onClick={() => ir("inicio")}>←</button>
@@ -1892,7 +1891,6 @@ function AppInterno() {
           }
         </>}
 
-        {/* ── MI TIENDA ── */}
         {pantalla === "mitienda" && <>
           <div className="back-row">
             <button className="btn-back" onClick={() => { playSound("click"); ir("inicio"); }}>←</button>
@@ -1952,7 +1950,6 @@ function AppInterno() {
                   const suspendida = miTienda.estado === "suspendida";
 
                   return <>
-                    {/* ── AVISO DE SUSPENSIÓN (modo solo-lectura) ── */}
                     {suspendida && (
                       <div className="empty" style={{ textAlign:"left", background:"#FFF0EE", border:"1.5px solid #F5C0B8" }}>
                         <p style={{ fontWeight:800, color:"var(--rojo)", fontSize:15, marginBottom:6 }}>🚫 Tu tienda está suspendida</p>
@@ -1964,7 +1961,6 @@ function AppInterno() {
                       </div>
                     )}
 
-                    {/* ── INFO DE TIENDA ── */}
                     <div className="tienda-info-card" style={{ marginBottom:20 }}>
                       <div className="tienda-info-head" style={{ marginBottom:18 }}>
                         {miTienda.foto_url
@@ -1979,7 +1975,6 @@ function AppInterno() {
                         </div>
                       </div>
 
-                      {/* ── STATS ── */}
                       <div className="stats-grid">
                         <div className="stat-card">
                           <p className="stat-val">{prodsTienda.length}</p>
@@ -1995,7 +1990,6 @@ function AppInterno() {
                         </div>
                       </div>
 
-                      {/* ── TOKENS ── */}
                       {!suspendida && (
                         <div className="tokens-bar">
                           <div className="tokens-left">
@@ -2017,7 +2011,6 @@ function AppInterno() {
                       )}
                     </div>
 
-                    {/* ── PRODUCTOS PUBLICADOS ── */}
                     {prodsTienda.length > 0 && (
                       <div className="tienda-info-card" style={{ marginBottom:20 }}>
                         <p style={{ fontFamily:"var(--font-head)", fontWeight:800, fontSize:15, marginBottom:12, color:"var(--cafe)" }}>
@@ -2041,7 +2034,6 @@ function AppInterno() {
                       </div>
                     )}
 
-                    {/* ── BOTÓN TOGGLE PUBLICAR (bloqueado si suspendida) ── */}
                     {!suspendida && <>
                       <button
                         className="btn-toggle-form"
@@ -2055,7 +2047,6 @@ function AppInterno() {
                         <span className={`btn-toggle-arrow ${mostrarFormProd ? "open" : ""}`}>▾</span>
                       </button>
 
-                      {/* ── FORMULARIO COLAPSABLE ── */}
                       <div className={`form-slide ${mostrarFormProd ? "visible" : ""}`}>
                         <div className="form-card" style={{ margin:"0 0 24px" }}>
                           <p style={{ fontWeight:700, fontSize:13, marginBottom:8, color:"var(--muted)" }}>📷 Fotos del producto (máximo 4)</p>
@@ -2094,7 +2085,6 @@ function AppInterno() {
           }
         </>}
 
-        {/* ── LOGIN (ruta dedicada) ── */}
         {pantalla === "login" && (
           <div className="empty">
             <div className="empty-icon">🔑</div>
@@ -2104,7 +2094,6 @@ function AppInterno() {
           </div>
         )}
 
-        {/* ── SOPORTE ── */}
         {pantalla === "soporte" && <>
           <div className="back-row">
             <button className="btn-back" onClick={() => ir("inicio")}>←</button>
@@ -2130,7 +2119,6 @@ function AppInterno() {
           </div>
         </>}
 
-        {/* ── POLÍTICAS ── */}
         {pantalla === "politicas" && <>
           <div className="back-row">
             <button className="btn-back" onClick={() => ir("inicio")}>←</button>
@@ -2155,7 +2143,6 @@ function AppInterno() {
           </div>
         </>}
 
-        {/* ── CÓMO VENDER ── */}
         {pantalla === "comovender" && <>
           <div className="back-row">
             <button className="btn-back" onClick={() => ir("inicio")}>←</button>
@@ -2185,7 +2172,6 @@ function AppInterno() {
 
       </div>
 
-      {/* MODAL VACIAR CARRITO */}
       {modalVaciar && (
         <div className="modal-wrap">
           <div className="modal-bg" onClick={() => setModalVaciar(null)} />
@@ -2193,17 +2179,16 @@ function AppInterno() {
             <p className="modal-title">¿Vaciar carrito?</p>
             <p className="modal-sub">Ya tienes productos de otra tienda. Si continúas se vaciará tu carrito actual.</p>
             <button className="btn-primary" onClick={() => vaciarYAgregar(modalVaciar.prod, modalVaciar.tienda, modalVaciar.cantidad)}>Vaciar y agregar</button>
-            <button className="btn-secondary" onClick={() => setModalVaciar(null)}>Cancelar</button>
+            <button className="btn-secondary" onClick={() => { playSound("close"); setModalVaciar(null); }}>Cancelar</button>
           </div>
         </div>
       )}
 
-      {/* PANEL AGREGAR AL CARRITO: foto, nombre, descripción y selector de cantidad */}
       {panelProducto && (
         <div className="modal-wrap">
           <div className="modal-bg" onClick={cerrarPanelCarrito} />
           <div className="modal-box" style={{ maxWidth:360, textAlign:"left" }}>
-            <div className="panel-prod-img">
+            <div className="panel-prod-img" ref={panelImgRef}>
               {firstFoto(panelProducto)
                 ? <img src={firstFoto(panelProducto)} alt={panelProducto.nombre} />
                 : <span>📦</span>
@@ -2217,9 +2202,9 @@ function AppInterno() {
 
             <p style={{ fontSize:13, fontWeight:700, color:"var(--muted)", marginBottom:8 }}>Cantidad</p>
             <div className="qty-stepper">
-              <button className="qty-btn" onClick={() => setPanelCantidad(q => Math.max(1, q - 1))} disabled={panelCantidad <= 1}>−</button>
+              <button className="qty-btn" onClick={() => { playSound("click"); setPanelCantidad(q => Math.max(1, q - 1)); }} disabled={panelCantidad <= 1}>−</button>
               <span className="qty-val">{panelCantidad}</span>
-              <button className="qty-btn" onClick={() => setPanelCantidad(q => Math.min(panelProducto.cantidad || 99, q + 1))} disabled={panelProducto.cantidad ? panelCantidad >= panelProducto.cantidad : false}>+</button>
+              <button className="qty-btn" onClick={() => { playSound("click"); setPanelCantidad(q => Math.min(panelProducto.cantidad || 99, q + 1)); }} disabled={panelProducto.cantidad ? panelCantidad >= panelProducto.cantidad : false}>+</button>
               {panelProducto.cantidad ? <span style={{ fontSize:12, color:"var(--muted)" }}>{panelProducto.cantidad} disponibles</span> : null}
             </div>
 
@@ -2231,7 +2216,22 @@ function AppInterno() {
         </div>
       )}
 
-      {/* MENÚ LATERAL */}
+      {/* AVIONES VOLANDO AL CARRITO */}
+      {vuelos.map(v => (
+        <div
+          key={v.id}
+          className="vuelo-item"
+          style={{
+            left: v.startX,
+            top: v.startY,
+            "--dx": `${v.dx}px`,
+            "--dy": `${v.dy}px`,
+          }}
+        >
+          ✈️
+        </div>
+      ))}
+
       {menuOpen && (
         <>
           <div className="overlay" onClick={() => setMenuOpen(false)} />
@@ -2273,7 +2273,6 @@ function AppInterno() {
   );
 }
 
-// ─── Export por defecto: AppInterno envuelto en ErrorBoundary ─────────
 export default function App() {
   return (
     <ErrorBoundary>

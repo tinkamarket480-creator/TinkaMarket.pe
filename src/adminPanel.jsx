@@ -96,7 +96,11 @@ const CSS = `
     color: var(--accent2); font-size: 10px; font-weight: 700;
     padding: 3px 10px; border-radius: 100px; letter-spacing: 1px; display: inline-block;
   }
-  .sidebar-nav { padding: 12px; flex: 1; }
+  /* FIX ESPACIO VACÍO: se quitó "flex: 1" de .sidebar-nav.
+     Antes el nav (pocos ítems) crecía para llenar toda la altura del
+     sidebar, dejando un bloque vacío entre el último ítem y el footer.
+     Ahora el nav ocupa solo su alto natural. */
+  .sidebar-nav { padding: 12px; }
   .nav-section { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; padding: 12px 8px 6px; text-transform: uppercase; }
   .nav-item {
     display: flex; align-items: center; gap: 10px;
@@ -116,7 +120,10 @@ const CSS = `
     font-size: 10px; font-weight: 800; padding: 2px 7px;
     border-radius: 100px; font-family: var(--font-m);
   }
-  .sidebar-foot { padding: 16px 12px; border-top: 1px solid var(--border); }
+  /* FIX ESPACIO VACÍO: "margin-top: auto" empuja el footer hasta el
+     fondo del sidebar sin necesidad de que .sidebar-nav tenga flex: 1,
+     así el hueco vacío desaparece y el footer queda anclado abajo. */
+  .sidebar-foot { padding: 16px 12px; border-top: 1px solid var(--border); margin-top: auto; }
   .admin-info { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
   .admin-avatar {
     width: 36px; height: 36px; border-radius: 10px;
@@ -321,6 +328,39 @@ const SECCIONES = [
 // el panel mostraba "eliminado ✅" aunque no se hubiera borrado nada.
 const MSG_SIN_PERMISO = "No se aplicó el cambio: sin permisos en la base de datos (revisa las políticas RLS) o el registro ya no existe.";
 
+// ── SONIDO ────────────────────────────────────────────────────────────
+// Genera un tono corto con Web Audio API (sin archivos de audio externos).
+// tipo "ok"  -> tono ascendente (feedback positivo)
+// tipo "err" -> tono descendente grave (feedback de error)
+function playTone(tipo = "ok") {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    if (tipo === "ok") {
+      osc.frequency.setValueAtTime(600, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(900, ctx.currentTime + 0.12);
+    } else {
+      osc.frequency.setValueAtTime(300, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + 0.15);
+    }
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.2);
+    // Cierra el contexto un poco después para liberar recursos
+    setTimeout(() => ctx.close().catch(() => {}), 300);
+  } catch (e) {
+    // Audio no soportado o bloqueado por el navegador: se ignora silenciosamente
+  }
+}
+
 export default function AdminPanel() {
   const [usuario,    setUsuario]    = useState(null);
   const [esAdmin,    setEsAdmin]    = useState(null); // null = cargando
@@ -414,6 +454,7 @@ export default function AdminPanel() {
 
   function showMsg(texto, tipo = "ok") {
     setMsg(texto); setMsgTipo(tipo);
+    playTone(tipo); // 🔊 sonido de feedback (éxito o error)
     setTimeout(() => setMsg(""), 3500);
   }
 
